@@ -1,0 +1,29 @@
+# Variáveis de ambiente e segredos — NUNCA subir
+.env
+.env.*
+!.env.example
+
+# Binários compilados
+aicurator
+curator
+*.exe
+*.out
+
+# Logs
+*.log
+/tmp/
+
+# Go
+vendor/
+*.test
+*.prof
+coverage.out
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
