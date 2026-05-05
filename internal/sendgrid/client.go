@@ -26,7 +26,6 @@ func New(cfg *config.Config) *Client {
 	}
 }
 
-// payload do SendGrid v3.
 type sgPayload struct {
 	Personalizations []personalization `json:"personalizations"`
 	From             address           `json:"from"`
@@ -55,15 +54,13 @@ func (c *Client) Send(subject, digestText string) error {
 		tos = append(tos, address{Email: e})
 	}
 
-	htmlBody := textToHTML(digestText)
-
 	payload := sgPayload{
 		Personalizations: []personalization{{To: tos}},
 		From:             address{Email: c.cfg.EmailFrom, Name: c.cfg.EmailFromName},
 		Subject:          subject,
 		Content: []content{
 			{Type: "text/plain", Value: digestText},
-			{Type: "text/html", Value: htmlBody},
+			{Type: "text/html", Value: textToHTML(digestText)},
 		},
 	}
 
@@ -93,45 +90,289 @@ func (c *Client) Send(subject, digestText string) error {
 	return nil
 }
 
-// textToHTML converte o digest em HTML simples mantendo parágrafos e links clicáveis.
+// sectionStyle define a aparência visual de cada bloco de seção.
+type sectionStyle struct {
+	emoji       string
+	bg          string
+	border      string
+	textColor   string
+	headerColor string
+}
+
+var sectionStyles = map[string]sectionStyle{
+	"pick":  {"⭐", "#F5F3FF", "#6366F1", "#3B1F8C", "#4F46E5"},
+	"fatos": {"💡", "#F0FDF4", "#16A34A", "#14532D", "#15803D"},
+	"hoje":  {"📅", "#FFF7ED", "#F97316", "#7C2D12", "#C2410C"},
+}
+
+func detectSection(line string) (sectionStyle, bool) {
+	lower := strings.ToLower(line)
+	switch {
+	case strings.Contains(lower, "ada's pick") || strings.Contains(lower, "ada pick"):
+		return sectionStyles["pick"], true
+	case strings.Contains(lower, "fatos interessantes") || strings.Contains(lower, "interesting facts"):
+		return sectionStyles["fatos"], true
+	case strings.Contains(lower, "hoje na história") || strings.Contains(lower, "hoje na historia") ||
+		strings.Contains(lower, "today in history"):
+		return sectionStyles["hoje"], true
+	}
+	return sectionStyle{}, false
+}
+
+// textToHTML converte o digest em e-mail HTML responsivo com cards e seções temáticas.
 func textToHTML(text string) string {
 	var sb strings.Builder
-	sb.WriteString(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-<style>
-body{font-family:Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.7}
-h1{font-size:22px;font-weight:600;margin-bottom:4px}
-p{margin:0 0 12px}
-a{color:#534AB7}
-hr{border:none;border-top:1px solid #e5e5e5;margin:20px 0}
-.footer{font-size:12px;color:#888;margin-top:32px}
-</style></head><body>`)
 
-	for _, line := range strings.Split(text, "\n") {
-		line = strings.TrimRight(line, " \t")
-		if line == "" {
-			sb.WriteString("<br>")
+	sb.WriteString(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body style="margin:0;padding:0;background:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<div style="max-width:640px;margin:0 auto">
+
+<div style="background:linear-gradient(150deg,#0F172A 0%,#1E3A5F 100%);padding:36px 32px;border-radius:0 0 20px 20px;text-align:center">
+  <div style="font-size:10px;letter-spacing:4px;color:#94A3B8;text-transform:uppercase;font-weight:600;margin-bottom:10px">Curadoria Semanal</div>
+  <div style="font-size:26px;font-weight:700;color:#F8FAFC;letter-spacing:-0.5px">Tecnologia &amp; IA</div>
+  <div style="width:36px;height:3px;background:#6366F1;margin:14px auto 0;border-radius:2px"></div>
+</div>
+
+<div style="padding:24px 16px">
+`)
+
+	lines := strings.Split(text, "\n")
+	inCard := false
+	inSection := false
+	var curStyle sectionStyle
+
+	for _, raw := range lines {
+		line := strings.TrimRight(raw, " \t")
+		clean := stripBullet(line)
+
+		if isNumberedItem(line) {
+			if inSection {
+				sb.WriteString("</div></div>\n\n")
+				inSection = false
+			}
+			if inCard {
+				sb.WriteString("</div></div>\n\n")
+			}
+			num, title := splitNumberedItem(line)
+			padded := num
+			if len(padded) == 1 {
+				padded = "0" + padded
+			}
+			fmt.Fprintf(&sb,
+				`<div style="background:#fff;border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)"><div style="border-left:4px solid #6366F1;padding:20px 24px"><div style="font-size:10px;font-weight:700;color:#6366F1;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px">%s</div><div style="font-size:17px;font-weight:700;color:#0F172A;line-height:1.4;margin-bottom:14px">%s</div>`,
+				padded, safeHTML(title),
+			)
+			inCard = true
 			continue
 		}
-		if strings.HasPrefix(line, "---") {
-			sb.WriteString("<hr>")
+
+		if inCard {
+			if line == "" {
+				continue
+			}
+			if isAdaLine(clean) {
+				flag, label := adaBlockMeta(clean)
+				_, val := splitMeta(clean)
+				fmt.Fprintf(&sb,
+					`<div style="background:#F5F3FF;border-left:3px solid #8B5CF6;padding:10px 14px;border-radius:0 8px 8px 0;margin:8px 0"><div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7C3AED;margin-bottom:5px">%s %s</div><div style="font-size:13px;color:#3B1F8C;line-height:1.65;font-style:italic">%s</div></div>`,
+					flag, label, safeHTML(val),
+				)
+				continue
+			}
+			if isLevelLine(clean) {
+				_, val := splitMeta(clean)
+				bg, color := levelColor(val)
+				fmt.Fprintf(&sb,
+					`<div style="margin-top:10px"><span style="display:inline-block;background:%s;color:%s;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:0.3px">%s</span></div>`,
+					bg, color, safeHTML(val),
+				)
+				continue
+			}
+			if isLinkLine(clean) {
+				_, val := splitMeta(clean)
+				url := strings.TrimSpace(val)
+				if strings.HasPrefix(url, "http") {
+					fmt.Fprintf(&sb,
+						`<a href="%s" style="display:inline-block;margin-top:12px;font-size:13px;color:#6366F1;text-decoration:none;font-weight:500">Acessar conteúdo →</a>`,
+						url,
+					)
+				}
+				continue
+			}
+			if isMetadataLine(clean) {
+				key, val := splitMeta(clean)
+				fmt.Fprintf(&sb,
+					`<div style="font-size:12px;color:#64748B;margin-bottom:5px"><span style="font-weight:600;color:#475569">%s:</span> %s</div>`,
+					safeHTML(key), safeHTML(val),
+				)
+				continue
+			}
+			fmt.Fprintf(&sb,
+				`<p style="margin:0 0 10px;color:#475569;font-size:14px;line-height:1.7">%s</p>`,
+				safeHTML(line),
+			)
 			continue
 		}
-		sb.WriteString("<p>")
-		sb.WriteString(linkify(line))
-		sb.WriteString("</p>\n")
+
+		if line == "" || strings.HasPrefix(line, "---") {
+			continue
+		}
+
+		if style, ok := detectSection(line); ok {
+			if inSection {
+				sb.WriteString("</div></div>\n\n")
+			}
+			fmt.Fprintf(&sb,
+				`<div style="background:%s;border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)"><div style="border-left:4px solid %s;padding:20px 24px"><div style="font-size:10px;font-weight:700;color:%s;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">%s %s</div>`,
+				style.bg, style.border, style.headerColor, style.emoji, safeHTML(line),
+			)
+			curStyle = style
+			inSection = true
+			continue
+		}
+
+		if inSection {
+			fmt.Fprintf(&sb,
+				`<p style="margin:0 0 8px;color:%s;font-size:14px;line-height:1.75">%s</p>`,
+				curStyle.textColor, safeHTML(line),
+			)
+			continue
+		}
+
+		fmt.Fprintf(&sb,
+			`<div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:14px;color:#334155;font-size:15px;line-height:1.75">%s</div>`,
+			safeHTML(line),
+		)
 	}
 
-	sb.WriteString(`<p class="footer">Gerado automaticamente pelo Agente de Curadoria</p>`)
-	sb.WriteString("</body></html>")
+	if inCard {
+		sb.WriteString("</div></div>\n\n")
+	}
+	if inSection {
+		sb.WriteString("</div></div>\n\n")
+	}
+
+	sb.WriteString(`</div>
+
+<div style="text-align:center;padding:20px 16px 32px;color:#94A3B8;font-size:12px;line-height:1.6">
+  <div style="width:28px;height:1px;background:#CBD5E1;margin:0 auto 14px"></div>
+  Gerado automaticamente pelo <strong style="color:#64748B">Agente de Curadoria — Ada</strong>
+</div>
+
+</div>
+</body>
+</html>`)
+
 	return sb.String()
 }
 
-// linkify transforma URLs em âncoras clicáveis.
-func linkify(s string) string {
+func isNumberedItem(line string) bool {
+	i := 0
+	for i < len(line) && line[i] >= '0' && line[i] <= '9' {
+		i++
+	}
+	return i > 0 && i < len(line) && (line[i] == '.' || line[i] == ')')
+}
+
+func splitNumberedItem(line string) (num, title string) {
+	i := 0
+	for i < len(line) && line[i] >= '0' && line[i] <= '9' {
+		i++
+	}
+	return line[:i], strings.TrimSpace(line[i+1:])
+}
+
+func stripBullet(line string) string {
+	s := strings.TrimLeft(line, " \t")
+	if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "•") || strings.HasPrefix(s, "*") {
+		s = strings.TrimSpace(s[1:])
+	}
+	return s
+}
+
+var adaKeywords = []string{"Ada diz", "Ada says"}
+var metaKeywords = []string{"Tipo", "Type", "Fonte", "Source", "Formato", "Format"}
+var levelKeywords = []string{"Nível", "Level", "Nivel"}
+var linkKeywords = []string{"Link", "URL", "Url"}
+
+func adaBlockMeta(line string) (flag, label string) {
+	if strings.HasPrefix(line, "Ada says") {
+		return "🇺🇸", "Ada says"
+	}
+	return "🇧🇷", "Ada diz"
+}
+
+func isAdaLine(line string) bool {
+	for _, k := range adaKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return false
+}
+
+func isMetadataLine(line string) bool {
+	for _, k := range metaKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return false
+}
+
+func isLevelLine(line string) bool {
+	for _, k := range levelKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return false
+}
+
+func isLinkLine(line string) bool {
+	for _, k := range linkKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return strings.HasPrefix(line, "http://") || strings.HasPrefix(line, "https://")
+}
+
+func splitMeta(line string) (key, val string) {
+	idx := strings.Index(line, ":")
+	if idx < 0 {
+		return "", strings.TrimSpace(line)
+	}
+	return strings.TrimSpace(line[:idx]), strings.TrimSpace(line[idx+1:])
+}
+
+func levelColor(val string) (bg, color string) {
+	lower := strings.ToLower(val)
+	switch {
+	case strings.Contains(lower, "inic") || strings.Contains(lower, "begin") || strings.Contains(lower, "basic"):
+		return "#D1FAE5", "#065F46"
+	case strings.Contains(lower, "avan") || strings.Contains(lower, "adv"):
+		return "#FEE2E2", "#991B1B"
+	default:
+		return "#EEF2FF", "#3730A3"
+	}
+}
+
+func safeHTML(s string) string {
 	words := strings.Fields(s)
 	for i, w := range words {
 		if strings.HasPrefix(w, "http://") || strings.HasPrefix(w, "https://") {
-			words[i] = fmt.Sprintf(`<a href="%s">%s</a>`, w, w)
+			words[i] = fmt.Sprintf(`<a href="%s" style="color:#6366F1;text-decoration:none">%s</a>`, w, w)
+		} else {
+			w = strings.ReplaceAll(w, "&", "&amp;")
+			w = strings.ReplaceAll(w, "<", "&lt;")
+			w = strings.ReplaceAll(w, ">", "&gt;")
+			words[i] = w
 		}
 	}
 	return strings.Join(words, " ")

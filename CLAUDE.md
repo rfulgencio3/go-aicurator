@@ -7,13 +7,13 @@
 
 ## Visão geral do projeto
 
-**go-aicurator** é um agente de curadoria de conteúdo escrito em Go.
+**go-aicurator** é um agente de curadoria de conteúdo escrito em Go, personificado pela **Ada** — uma IA com personalidade, humor mordaz e opiniões técnicas firmes, batizada em homenagem a Ada Lovelace.
 
-Ele usa a API do Claude (com web search ativo) para buscar conteúdos recentes sobre Tecnologia & IA e envia um digest bilíngue por e-mail via SendGrid. É projetado para rodar de forma autônoma via cron job.
+O agente busca conteúdos recentes sobre Tecnologia & IA, gera um digest bilíngue com comentários da Ada e envia por e-mail. Roda de forma autônoma via GitHub Actions.
 
 **Fluxo principal:**
 ```
-cron → cmd/main.go → config.Load() → anthropic.GenerateDigest() → sendgrid.Send()
+GitHub Actions (cron) → cmd/main.go → config.Load() → [openai|anthropic].GenerateDigest() → [resend|sendgrid].Send()
 ```
 
 ---
@@ -24,12 +24,12 @@ cron → cmd/main.go → config.Load() → anthropic.GenerateDigest() → sendgr
 |---|---|
 | Linguagem | Go 1.22+ |
 | Módulo | `github.com/seu-usuario/go-aicurator` |
-| API de IA | Anthropic (`claude-sonnet-4-20250514`) com tool `web_search_20250305` |
-| E-mail | SendGrid v3 REST API |
-| Agendamento | Cron do sistema operacional |
+| Provider de IA | OpenAI (padrão, `gpt-4o` + `web_search_preview`) ou Anthropic (`claude-sonnet-4-20250514` + `web_search_20250305`) |
+| Provider de e-mail | Resend (padrão) ou SendGrid |
+| Agendamento | GitHub Actions (`.github/workflows/digest.yml`) |
 | Dependências externas | Nenhuma — apenas stdlib Go |
 
-O projeto **não usa nenhum pacote externo** (`go.mod` sem `require`). Mantenha assim sempre que possível. Se precisar adicionar uma dependência, justifique no PR.
+O projeto **não usa nenhum pacote externo** (`go.mod` sem `require`). Mantenha assim sempre que possível.
 
 ---
 
@@ -37,19 +37,26 @@ O projeto **não usa nenhum pacote externo** (`go.mod` sem `require`). Mantenha 
 
 ```
 go-aicurator/
+├── .github/
+│   └── workflows/
+│       └── digest.yml           # Cron: seg, qua, sex às 07h BRT (10h UTC)
 ├── cmd/
 │   └── main.go                  # Entrypoint — orquestra os pacotes internos
 ├── internal/
 │   ├── anthropic/
-│   │   └── client.go            # Cliente da API Anthropic + construção do prompt
+│   │   └── client.go            # Provider IA Anthropic + prompt da Ada
 │   ├── config/
 │   │   └── config.go            # Carrega e valida variáveis de ambiente
+│   ├── openai/
+│   │   └── client.go            # Provider IA OpenAI + prompt da Ada
+│   ├── resend/
+│   │   └── client.go            # Provider e-mail Resend + renderização HTML
 │   └── sendgrid/
-│       └── client.go            # Cliente SendGrid + conversão texto → HTML
-├── .env.example                 # Variáveis necessárias (sem valores reais)
-├── .gitignore                   # Bloqueia .env e binários
-├── Makefile                     # Targets: build, run, tidy, install-cron
-├── CLAUDE.md                    # Este arquivo
+│       └── client.go            # Provider e-mail SendGrid + renderização HTML
+├── .env.example
+├── .gitignore
+├── Makefile
+├── CLAUDE.md
 └── go.mod
 ```
 
@@ -91,19 +98,24 @@ go-aicurator/
 
 ## Variáveis de ambiente
 
-Todas as variáveis estão documentadas em `.env.example`. **Nunca** commite valores reais.
+Todas documentadas em `.env.example`. **Nunca** commite valores reais.
 
 | Variável | Obrigatória | Padrão |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Sim | — |
+| `AI_PROVIDER` | Não | `openai` |
+| `OPENAI_API_KEY` | Sim (se `AI_PROVIDER=openai`) | — |
+| `OPENAI_MODEL` | Não | `gpt-4o` |
+| `ANTHROPIC_API_KEY` | Sim (se `AI_PROVIDER=anthropic`) | — |
 | `ANTHROPIC_MODEL` | Não | `claude-sonnet-4-20250514` |
-| `SENDGRID_API_KEY` | Sim | — |
+| `EMAIL_PROVIDER` | Não | `resend` |
+| `RESEND_API_KEY` | Sim (se `EMAIL_PROVIDER=resend`) | — |
+| `SENDGRID_API_KEY` | Sim (se `EMAIL_PROVIDER=sendgrid`) | — |
 | `EMAIL_FROM` | Sim | — |
 | `EMAIL_FROM_NAME` | Não | `Agente de Curadoria` |
 | `EMAIL_TO` | Sim | — (vírgula para múltiplos) |
 | `TOPICS` | Não | IA, ML, LLMs, Startups |
 | `FORMATS` | Não | Artigos, Papers, Vídeos |
-| `ITEM_QTY` | Não | `8` |
+| `ITEM_QTY` | Não | `12` |
 | `LANG` | Não | `bilingual` |
 
 ---
@@ -111,9 +123,9 @@ Todas as variáveis estão documentadas em `.env.example`. **Nunca** commite val
 ## Segurança — regras inegociáveis
 
 - `.env` está no `.gitignore`. **Jamais remova essa entrada.**
-- Nunca logue o valor de `APIKey`, `SendGridAPIKey` ou qualquer secret.
+- Nunca logue valores de API keys ou qualquer secret.
 - Nunca inclua secrets em mensagens de erro retornadas ao caller.
-- Se adicionar novos campos sensíveis à `Config`, certifique-se de que não aparecem em `fmt.Sprintf("%+v", cfg)` — use um método `String()` customizado se necessário.
+- Se adicionar novos campos sensíveis à `Config`, certifique-se de que não aparecem em `fmt.Sprintf("%+v", cfg)`.
 
 ---
 
@@ -123,55 +135,74 @@ Todas as variáveis estão documentadas em `.env.example`. **Nunca** commite val
 # 1. Copiar e preencher variáveis
 cp .env.example .env
 
-# 2. Testar sem compilar
+# 2. Testar sem compilar (Linux/macOS/Git Bash)
 make run
 
 # 3. Compilar
 make build
+```
 
-# 4. Instalar cron (07h seg, qua, sex)
-make install-cron
-
-# 5. Ver logs
-tail -f /tmp/aicurator.log
+**No Windows (PowerShell), carregue as variáveis manualmente antes de rodar:**
+```powershell
+foreach ($line in Get-Content .env) {
+  if ($line -match '^[^#].+=') {
+    $parts = $line -split '=', 2
+    [System.Environment]::SetEnvironmentVariable($parts[0], $parts[1])
+  }
+}
+go run .\cmd\main.go
 ```
 
 ---
 
-## Makefile targets
+## Prompt da Ada
 
-| Target | O que faz |
-|---|---|
-| `make build` | Compila o binário `./aicurator` |
-| `make run` | Carrega `.env` e executa via `go run` |
-| `make tidy` | Roda `go mod tidy` |
-| `make install-cron` | Compila e instala entrada no crontab |
+O prompt é construído em `buildPrompt()` — presente em `internal/openai/client.go` e `internal/anthropic/client.go`. Ambos devem ser mantidos em sincronia.
+
+**Ada é:**
+- Uma IA com humor mordaz britânico e opiniões técnicas firmes
+- Ama Go e .NET; desconfia do ecossistema JavaScript; não reconhece PHP
+- Cita Dijkstra, Shannon, Turing, Knuth e von Neumann quando pertinente
+- Anti-hype: sinaliza buzzwords e promessas infundadas
+- Liberal: pro-privacidade, pro-open source
+
+**Ao modificar o prompt:**
+- Mantenha o formato estruturado por item (Tipo, Resumo, Ada diz, Ada says, Link, Nível)
+- Mantenha as seções fixas ao final: Ada's Pick, Fatos Interessantes, Hoje na História
+- Não remova a instrução de retornar apenas texto plano (sem markdown extra)
+- A data atual é injetada via `datePT(time.Now())` — não hardcode datas
+- Teste com `make run` antes de commitar
 
 ---
 
-## Prompt do agente (anthropic/client.go)
+## Renderização HTML do e-mail
 
-O prompt é construído dinamicamente em `buildPrompt()` a partir da config. Ao modificá-lo:
+A função `textToHTML()` fica em cada cliente de e-mail (`resend/client.go`, `sendgrid/client.go`) e deve ser mantida em sincronia entre os dois.
 
-- Mantenha a instrução de retornar **apenas o texto do digest** (sem markdown extra, sem blocos de código).
-- Não remova a instrução de nível de profundidade (Iniciante / Intermediário / Avançado).
-- Teste com `make run` antes de commitar — o resultado vai direto para o e-mail.
-- O modelo usa a tool `web_search_20250305`. Não remova ela do payload — sem ela o digest não terá conteúdo atualizado.
+O parser detecta:
+- Itens numerados → cards com borda esquerda roxa
+- `Ada diz:` / `Ada says:` → bloco roxo com bandeira PT/EN
+- `Nível:` → badge colorido (verde/roxo/vermelho)
+- `Link:` → botão "Acessar conteúdo →"
+- Cabeçalhos de seção (Ada's Pick, Fatos Interessantes, Hoje na História) → bloco temático
 
 ---
 
 ## Adicionando novas funcionalidades
 
-### Novo provedor de e-mail
-1. Crie `internal/<provedor>/client.go` com a mesma assinatura: `Send(subject, body string) error`.
-2. Adicione as variáveis necessárias em `internal/config/config.go`.
-3. Instancie no `cmd/main.go` baseado em uma variável `EMAIL_PROVIDER`.
+### Novo provider de IA
+1. Crie `internal/<provider>/client.go` com método `GenerateDigest() (string, error)`.
+2. Adicione as variáveis em `internal/config/config.go` no switch de `AI_PROVIDER`.
+3. Instancie no `cmd/main.go` no switch da interface `digester`.
+
+### Novo provider de e-mail
+1. Crie `internal/<provider>/client.go` com método `Send(subject, body string) error`.
+2. Adicione as variáveis em `internal/config/config.go` no switch de `EMAIL_PROVIDER`.
+3. Instancie no `cmd/main.go` no switch da interface `mailer`.
+4. Implemente `textToHTML()` com o mesmo comportamento de `resend/client.go`.
 
 ### Novo tópico ou formato
 Apenas atualize `.env` — nenhuma mudança de código necessária.
-
-### Suporte a múltiplos idiomas por e-mail separado
-Crie uma função em `internal/anthropic/client.go` que aceite `lang string` e itere no `cmd/main.go`.
 
 ---
 
@@ -183,4 +214,5 @@ Crie uma função em `internal/anthropic/client.go` que aceite `lang string` e i
 - Criar arquivos `.env` com valores reais.
 - Sugerir `panic` como tratamento de erro em produção.
 - Alterar o `.gitignore` de forma que exponha secrets.
-- Refatorar pacotes para fora de `internal/` sem justificativa.
+- Desincronizar `buildPrompt()` entre `openai/client.go` e `anthropic/client.go`.
+- Desincronizar `textToHTML()` entre `resend/client.go` e `sendgrid/client.go`.
