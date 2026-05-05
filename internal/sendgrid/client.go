@@ -14,6 +14,10 @@ import (
 
 const sendGridURL = "https://api.sendgrid.com/v3/mail/send"
 
+const adaAvatarSVG = `<svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg"><circle cx="28" cy="28" r="28" fill="#6366F1"/><path d="M12 56Q28 50 44 56" fill="#4338CA"/><rect x="24" y="38" width="8" height="6" rx="2" fill="#F5C8A0"/><ellipse cx="28" cy="30" rx="11" ry="12" fill="#F5C8A0"/><ellipse cx="15" cy="27" rx="5" ry="9" fill="#1C1040"/><ellipse cx="41" cy="27" rx="5" ry="9" fill="#1C1040"/><ellipse cx="28" cy="19" rx="13" ry="8" fill="#1C1040"/><circle cx="28" cy="12" r="6" fill="#1C1040"/><circle cx="28" cy="12" r="4" fill="#312E81"/><ellipse cx="23" cy="29" rx="1.8" ry="2" fill="#1C1040"/><ellipse cx="33" cy="29" rx="1.8" ry="2" fill="#1C1040"/><circle cx="23.7" cy="28.3" r="0.6" fill="white"/><circle cx="33.7" cy="28.3" r="0.6" fill="white"/><path d="M23 36.5Q28 40 33 36.5" stroke="#B5735A" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`
+
+const alanAvatarSVG = `<svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg"><circle cx="28" cy="28" r="28" fill="#0D9488"/><path d="M12 56Q28 50 44 56" fill="#0F766E"/><path d="M24 42L28 47L32 42L30 38L26 38Z" fill="white" opacity="0.85"/><rect x="24" y="37" width="8" height="7" rx="2" fill="#F5C8A0"/><ellipse cx="28" cy="29" rx="11" ry="12" fill="#F5C8A0"/><ellipse cx="16" cy="29" rx="2.5" ry="3.5" fill="#F0B890"/><ellipse cx="40" cy="29" rx="2.5" ry="3.5" fill="#F0B890"/><ellipse cx="28" cy="18" rx="12" ry="8" fill="#5D3D2E"/><path d="M16 17Q22 13 28 15Q34 13 40 17" fill="#4A3025"/><rect x="15" y="19" width="4" height="8" rx="2" fill="#4A3025"/><rect x="37" y="19" width="4" height="8" rx="2" fill="#4A3025"/><ellipse cx="23" cy="28" rx="1.8" ry="2" fill="#1C1040"/><ellipse cx="33" cy="28" rx="1.8" ry="2" fill="#1C1040"/><circle cx="23.7" cy="27.3" r="0.6" fill="white"/><circle cx="33.7" cy="27.3" r="0.6" fill="white"/><path d="M22 36Q28 40 34 36" stroke="#B5735A" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`
+
 type Client struct {
 	cfg  *config.Config
 	http *http.Client
@@ -100,9 +104,10 @@ type sectionStyle struct {
 }
 
 var sectionStyles = map[string]sectionStyle{
-	"pick":  {"⭐", "#F5F3FF", "#6366F1", "#3B1F8C", "#4F46E5"},
-	"fatos": {"💡", "#F0FDF4", "#16A34A", "#14532D", "#15803D"},
-	"hoje":  {"📅", "#FFF7ED", "#F97316", "#7C2D12", "#C2410C"},
+	"pick":     {"⭐", "#F5F3FF", "#6366F1", "#3B1F8C", "#4F46E5"},
+	"alanpick": {"🏆", "#F0FDFA", "#0D9488", "#134E4A", "#0F766E"},
+	"fatos":    {"💡", "#F0FDF4", "#16A34A", "#14532D", "#15803D"},
+	"hoje":     {"📅", "#FFF7ED", "#F97316", "#7C2D12", "#C2410C"},
 }
 
 func detectSection(line string) (sectionStyle, bool) {
@@ -110,6 +115,8 @@ func detectSection(line string) (sectionStyle, bool) {
 	switch {
 	case strings.Contains(lower, "ada's pick") || strings.Contains(lower, "ada pick"):
 		return sectionStyles["pick"], true
+	case strings.Contains(lower, "alan's pick") || strings.Contains(lower, "alan pick"):
+		return sectionStyles["alanpick"], true
 	case strings.Contains(lower, "fatos interessantes") || strings.Contains(lower, "interesting facts"):
 		return sectionStyles["fatos"], true
 	case strings.Contains(lower, "hoje na história") || strings.Contains(lower, "hoje na historia") ||
@@ -153,7 +160,23 @@ func textToHTML(text string) string {
     <span style="font-size:38px;font-weight:800;color:#F8FAFC;letter-spacing:-2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">metria</span><span style="font-size:38px;font-weight:800;color:#6366F1;letter-spacing:-2px">.</span>
   </div>
   <div style="font-size:11px;font-weight:700;letter-spacing:4px;color:#818CF8;text-transform:uppercase;margin-bottom:16px">CuradorIA</div>
-  <div style="width:32px;height:2px;background:#6366F1;margin:0 auto;border-radius:2px"></div>
+  <div style="width:32px;height:2px;background:#6366F1;margin:0 auto 24px;border-radius:2px"></div>
+  <div style="display:inline-flex;gap:36px">
+    <div style="text-align:center">
+`)
+	sb.WriteString(adaAvatarSVG)
+	sb.WriteString(`
+      <div style="font-size:11px;font-weight:700;color:#A5B4FC;margin-top:8px;letter-spacing:2px;text-transform:uppercase">Ada</div>
+      <div style="font-size:9px;color:#64748B;margin-top:2px">Ada Lovelace</div>
+    </div>
+    <div style="text-align:center">
+`)
+	sb.WriteString(alanAvatarSVG)
+	sb.WriteString(`
+      <div style="font-size:11px;font-weight:700;color:#5EEAD4;margin-top:8px;letter-spacing:2px;text-transform:uppercase">Alan</div>
+      <div style="font-size:9px;color:#64748B;margin-top:2px">Alan Turing</div>
+    </div>
+  </div>
 </div>
 
 <div style="padding:24px 16px">
@@ -211,6 +234,15 @@ func textToHTML(text string) string {
 				_, val := splitMeta(clean)
 				fmt.Fprintf(&sb,
 					`<div style="background:#F5F3FF;border-left:3px solid #8B5CF6;padding:10px 14px;border-radius:0 8px 8px 0;margin:8px 0"><div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7C3AED;margin-bottom:5px">%s %s</div><div style="font-size:13px;color:#3B1F8C;line-height:1.65;font-style:italic">%s</div></div>`,
+					flag, label, safeHTML(val),
+				)
+				continue
+			}
+			if isAlanLine(clean) {
+				flag, label := alanBlockMeta(clean)
+				_, val := splitMeta(clean)
+				fmt.Fprintf(&sb,
+					`<div style="background:#F0FDFA;border-left:3px solid #14B8A6;padding:10px 14px;border-radius:0 8px 8px 0;margin:8px 0"><div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#0D9488;margin-bottom:5px">%s %s</div><div style="font-size:13px;color:#134E4A;line-height:1.65;font-style:italic">%s</div></div>`,
 					flag, label, safeHTML(val),
 				)
 				continue
@@ -300,7 +332,7 @@ func textToHTML(text string) string {
   <div style="margin-bottom:6px">
     <span style="font-size:15px;font-weight:800;color:#64748B;letter-spacing:-0.5px">metria</span><span style="font-size:15px;font-weight:800;color:#6366F1">.</span>
   </div>
-  <div style="color:#94A3B8;font-size:11px;margin-bottom:12px">Gerado automaticamente por <strong style="color:#64748B">Metria CuradorIA</strong> &mdash; Ada</div>
+  <div style="color:#94A3B8;font-size:11px;margin-bottom:12px">Gerado automaticamente por <strong style="color:#64748B">Metria CuradorIA</strong> &mdash; Ada &amp; Alan</div>
   <a href="https://github.com/rfulgencio3/go-aicurator" style="color:#64748B;text-decoration:none;font-size:11px">
     <svg width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:4px"><path fill="#64748B" d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>rfulgencio3/go-aicurator
   </a>
@@ -359,6 +391,7 @@ func stripBullet(line string) string {
 }
 
 var adaKeywords = []string{"Ada diz", "Ada says"}
+var alanKeywords = []string{"Alan diz", "Alan says"}
 var metaKeywords = []string{"Tipo", "Type", "Fonte", "Source", "Formato", "Format"}
 var levelKeywords = []string{"Nível", "Level", "Nivel"}
 var linkKeywords = []string{"Link", "URL", "Url"}
@@ -373,6 +406,22 @@ func adaBlockMeta(line string) (flag, label string) {
 
 func isAdaLine(line string) bool {
 	for _, k := range adaKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return false
+}
+
+func alanBlockMeta(line string) (flag, label string) {
+	if strings.HasPrefix(line, "Alan says") {
+		return "🇺🇸", "Alan says"
+	}
+	return "🇧🇷", "Alan diz"
+}
+
+func isAlanLine(line string) bool {
+	for _, k := range alanKeywords {
 		if strings.HasPrefix(line, k+":") {
 			return true
 		}
