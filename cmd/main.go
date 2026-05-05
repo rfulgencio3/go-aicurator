@@ -38,7 +38,7 @@ func main() {
 		log.Fatalf("erro ao gerar digest: %v", err)
 	}
 
-	subject := fmt.Sprintf("Curadoria Tecnologia & IA — %s", time.Now().Format("02/01/2006"))
+	subject := fmt.Sprintf("Metria CuradorIA — %s", time.Now().Format("02/01/2006"))
 
 	log.Printf("Enviando e-mail para %v via %s...", cfg.EmailTo, cfg.EmailProvider)
 

@@ -133,8 +133,9 @@ func textToHTML(text string) string {
 <div style="max-width:640px;margin:0 auto">
 
 <div style="background:linear-gradient(150deg,#0F172A 0%,#1E3A5F 100%);padding:36px 32px;border-radius:0 0 20px 20px;text-align:center">
-  <div style="font-size:10px;letter-spacing:4px;color:#94A3B8;text-transform:uppercase;font-weight:600;margin-bottom:10px">Curadoria Semanal</div>
-  <div style="font-size:26px;font-weight:700;color:#F8FAFC;letter-spacing:-0.5px">Tecnologia &amp; IA</div>
+  <div style="margin-bottom:16px"><svg width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg"><rect width="52" height="52" rx="14" fill="#6366F1"/><line x1="10" y1="10" x2="22" y2="10" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="10" x2="10" y2="22" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="2.5" fill="rgba(255,255,255,0.5)"/><line x1="42" y1="10" x2="30" y2="10" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><line x1="42" y1="10" x2="42" y2="22" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><circle cx="42" cy="10" r="2.5" fill="rgba(255,255,255,0.5)"/><line x1="10" y1="42" x2="22" y2="42" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="42" x2="10" y2="30" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="42" r="2.5" fill="rgba(255,255,255,0.5)"/><line x1="42" y1="42" x2="30" y2="42" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><line x1="42" y1="42" x2="42" y2="30" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/><circle cx="42" cy="42" r="2.5" fill="rgba(255,255,255,0.5)"/><text x="26" y="34" text-anchor="middle" font-family="-apple-system,Arial,sans-serif" font-size="24" font-weight="800" fill="white">M</text></svg></div>
+  <div style="font-size:22px;font-weight:700;color:#F8FAFC;letter-spacing:-0.3px">Metria Curador<span style="color:#818CF8">IA</span></div>
+  <div style="font-size:10px;letter-spacing:3px;color:#64748B;text-transform:uppercase;font-weight:500;margin-top:8px">Curadoria de Tecnologia</div>
   <div style="width:36px;height:3px;background:#6366F1;margin:14px auto 0;border-radius:2px"></div>
 </div>
 
@@ -261,7 +262,7 @@ func textToHTML(text string) string {
 
 <div style="text-align:center;padding:20px 16px 32px;color:#94A3B8;font-size:12px;line-height:1.6">
   <div style="width:28px;height:1px;background:#CBD5E1;margin:0 auto 14px"></div>
-  Gerado automaticamente pelo <strong style="color:#64748B">Agente de Curadoria — Ada</strong>
+  Gerado automaticamente por <strong style="color:#64748B">Metria CuradorIA</strong> &mdash; Ada
 </div>
 
 </div>

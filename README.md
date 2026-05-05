@@ -1,4 +1,4 @@
-# go-aicurator — Curadoria de Tecnologia & IA com Ada
+# Metria CuradorIA
 
 **Ada** é uma IA de curadoria com personalidade: humor mordaz britânico, opiniões técnicas firmes e um detector de hype permanentemente ativado — batizada em homenagem a Ada Lovelace.
 
