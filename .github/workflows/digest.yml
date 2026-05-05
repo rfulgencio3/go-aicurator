@@ -11,14 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      # Preencha apenas o secret do provider de IA que for usar:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-      EMAIL_TO: ${{ secrets.EMAIL_TO }}
-      # Preencha apenas o secret do provider que for usar:
+      # Preencha apenas o secret do provider de e-mail que for usar:
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
       SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+      EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      AI_PROVIDER: openai
       EMAIL_PROVIDER: resend
       EMAIL_FROM_NAME: ${{ vars.EMAIL_FROM_NAME }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
       ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
       TOPICS: ${{ vars.TOPICS }}
       FORMATS: ${{ vars.FORMATS }}

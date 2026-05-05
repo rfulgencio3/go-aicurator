@@ -8,6 +8,7 @@ import (
 
 	"github.com/seu-usuario/go-aicurator/internal/anthropic"
 	"github.com/seu-usuario/go-aicurator/internal/config"
+	"github.com/seu-usuario/go-aicurator/internal/openai"
 	"github.com/seu-usuario/go-aicurator/internal/resend"
 	"github.com/seu-usuario/go-aicurator/internal/sendgrid"
 )
@@ -20,9 +21,19 @@ func main() {
 		log.Fatalf("configuração inválida: %v", err)
 	}
 
-	log.Println("Gerando digest via Claude...")
-	claude := anthropic.New(cfg)
-	digest, err := claude.GenerateDigest()
+	type digester interface {
+		GenerateDigest() (string, error)
+	}
+	var ai digester
+	switch cfg.AIProvider {
+	case "anthropic":
+		ai = anthropic.New(cfg)
+	case "openai":
+		ai = openai.New(cfg)
+	}
+
+	log.Printf("Gerando digest via %s...", cfg.AIProvider)
+	digest, err := ai.GenerateDigest()
 	if err != nil {
 		log.Fatalf("erro ao gerar digest: %v", err)
 	}

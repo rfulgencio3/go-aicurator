@@ -8,9 +8,12 @@ import (
 )
 
 type Config struct {
-	// Anthropic
+	// IA
+	AIProvider      string // "anthropic" | "openai"
 	AnthropicAPIKey string
 	AnthropicModel  string
+	OpenAIAPIKey    string
+	OpenAIModel     string
 
 	// E-mail
 	EmailProvider string // "resend" | "sendgrid"
@@ -30,8 +33,17 @@ type Config struct {
 func Load() (*Config, error) {
 	c := &Config{}
 
-	c.AnthropicAPIKey = mustEnv("ANTHROPIC_API_KEY")
-	c.AnthropicModel = envOr("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+	c.AIProvider = envOr("AI_PROVIDER", "openai")
+	switch c.AIProvider {
+	case "anthropic":
+		c.AnthropicAPIKey = mustEnv("ANTHROPIC_API_KEY")
+		c.AnthropicModel = envOr("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+	case "openai":
+		c.OpenAIAPIKey = mustEnv("OPENAI_API_KEY")
+		c.OpenAIModel = envOr("OPENAI_MODEL", "gpt-4o")
+	default:
+		return nil, fmt.Errorf("AI_PROVIDER deve ser anthropic ou openai")
+	}
 
 	c.EmailProvider = envOr("EMAIL_PROVIDER", "resend")
 	switch c.EmailProvider {
