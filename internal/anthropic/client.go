@@ -196,6 +196,13 @@ Busque %d conteúdos recentes e relevantes sobre: %s.
 Formatos desejados: %s.
 %s
 
+FONTES E CRIADORES PREFERENCIAIS (priorize quando relevante):
+- Geopolítica: Clovis de Barros Filho, analistas de relações internacionais
+- Neurociência: Miguel Nicolelis e pesquisadores do campo
+- Astronomia/Ciência: Sergio Sacani, Ciência Todo Dia, Ciência sem Fim
+- Tech/Dev: Fabio Akita, Professor HOK, Alura, Codecon, Hipsters.tech, Café Debug
+- Vídeos/Podcasts: Mano Deyvin, Lucas Montano, Flow podcast (quando o convidado for relevante)
+
 IMPORTANTE: títulos em texto simples — sem **, *, # ou qualquer marcador markdown.
 
 Para cada item, use EXATAMENTE este formato (sem omitir nenhum campo):
@@ -226,6 +233,12 @@ Duas ou três curiosidades técnicas ou históricas relacionadas aos temas cober
 
 Hoje na História / Today in History
 Hoje é %s. Liste 3 a 5 marcos históricos que ocorreram nesta data (mesmo dia e mês, qualquer ano) ao longo da história mundial — tecnologia, ciência, cultura, política. Inclua o ano de cada evento. Apresente em português e em inglês.
+
+Livro da Semana / Book of the Week
+Ada ou Alan recomenda um livro relacionado a algum tema coberto nesta edição. Inclua: título completo, autor, 2-3 frases de por que vale ler, e link para compra (Amazon Brasil quando disponível).
+
+Canal/Vídeo em Destaque / Featured Channel or Video
+Um vídeo ou episódio de podcast relevante da semana. Priorize canais: Ciência Todo Dia, Ciência sem Fim, Mano Deyvin, Lucas Montano, Fabio Akita, Alura, Codecon, Hipsters.tech, Café Debug, Flow podcast. Inclua: nome do canal, título do vídeo/episódio, 2-3 frases de por que vale assistir, e link.
 
 Responda APENAS com o texto do digest, sem blocos de código ou markdown extra.`,
 		cfg.ItemQty,

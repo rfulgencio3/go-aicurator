@@ -90,6 +90,8 @@ var sectionStyles = map[string]sectionStyle{
 	"alanpick": {"🏆", "#F0FDFA", "#0D9488", "#134E4A", "#0F766E"},
 	"fatos":    {"💡", "#F0FDF4", "#16A34A", "#14532D", "#15803D"},
 	"hoje":     {"📅", "#FFF7ED", "#F97316", "#7C2D12", "#C2410C"},
+	"livro":    {"📚", "#FFFBEB", "#D97706", "#92400E", "#B45309"},
+	"canal":    {"🎬", "#FFF1F2", "#EF4444", "#991B1B", "#DC2626"},
 }
 
 func detectSection(line string) (sectionStyle, bool) {
@@ -104,6 +106,12 @@ func detectSection(line string) (sectionStyle, bool) {
 	case strings.Contains(lower, "hoje na história") || strings.Contains(lower, "hoje na historia") ||
 		strings.Contains(lower, "today in history"):
 		return sectionStyles["hoje"], true
+	case strings.Contains(lower, "livro da semana") || strings.Contains(lower, "book of the week"):
+		return sectionStyles["livro"], true
+	case strings.Contains(lower, "canal/vídeo") || strings.Contains(lower, "canal/video") ||
+		strings.Contains(lower, "featured channel") || strings.Contains(lower, "featured video") ||
+		strings.Contains(lower, "vídeo em destaque"):
+		return sectionStyles["canal"], true
 	}
 	return sectionStyle{}, false
 }

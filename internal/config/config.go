@@ -55,7 +55,7 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("EMAIL_PROVIDER deve ser resend ou sendgrid")
 	}
 	c.EmailFrom = mustEnv("EMAIL_FROM")
-	c.EmailFromName = envOr("EMAIL_FROM_NAME", "Metria CuradorIA")
+	c.EmailFromName = envOr("EMAIL_FROM_NAME", "Ada & Alan News")
 
 	toRaw := mustEnv("EMAIL_TO")
 	for _, e := range strings.Split(toRaw, ",") {
@@ -64,7 +64,7 @@ func Load() (*Config, error) {
 		}
 	}
 
-	topicsRaw := envOr("TOPICS", "Inteligência Artificial,Machine Learning,LLMs e modelos de linguagem,Startups de tecnologia")
+	topicsRaw := envOr("TOPICS", "Inteligência Artificial e Machine Learning,LLMs e Modelos de Linguagem,Astronomia e Exploração Espacial,Neurociência e Comportamento Humano,Estoicismo e Filosofia Prática,Desenvolvimento Pessoal e Performance,Geopolítica e Relações Internacionais,Tempo e Clima,Tecnologia e Startups")
 	for _, t := range strings.Split(topicsRaw, ",") {
 		if v := strings.TrimSpace(t); v != "" {
 			c.Topics = append(c.Topics, v)
