@@ -72,8 +72,37 @@ func (c *Client) Send(subject, digestText string) error {
 	return nil
 }
 
-// textToHTML converte o digest em um e-mail HTML profissional.
-// Detecta itens numerados, metadados (Tipo, Nível, Link) e os renderiza como cards.
+// sectionStyle define a aparência visual de cada bloco de seção.
+type sectionStyle struct {
+	emoji       string
+	bg          string
+	border      string
+	textColor   string
+	headerColor string
+}
+
+var sectionStyles = map[string]sectionStyle{
+	"pick":  {"⭐", "#F5F3FF", "#6366F1", "#3B1F8C", "#4F46E5"},
+	"fatos": {"💡", "#F0FDF4", "#16A34A", "#14532D", "#15803D"},
+	"hoje":  {"📅", "#FFF7ED", "#F97316", "#7C2D12", "#C2410C"},
+}
+
+// detectSection identifica se a linha é cabeçalho de uma seção especial.
+func detectSection(line string) (sectionStyle, bool) {
+	lower := strings.ToLower(line)
+	switch {
+	case strings.Contains(lower, "ada's pick") || strings.Contains(lower, "ada pick"):
+		return sectionStyles["pick"], true
+	case strings.Contains(lower, "fatos interessantes") || strings.Contains(lower, "interesting facts"):
+		return sectionStyles["fatos"], true
+	case strings.Contains(lower, "hoje na história") || strings.Contains(lower, "hoje na historia") ||
+		strings.Contains(lower, "today in history"):
+		return sectionStyles["hoje"], true
+	}
+	return sectionStyle{}, false
+}
+
+// textToHTML converte o digest em e-mail HTML responsivo com cards e seções temáticas.
 func textToHTML(text string) string {
 	var sb strings.Builder
 
@@ -97,12 +126,19 @@ func textToHTML(text string) string {
 
 	lines := strings.Split(text, "\n")
 	inCard := false
+	inSection := false
+	var curStyle sectionStyle
 
 	for _, raw := range lines {
 		line := strings.TrimRight(raw, " \t")
 		clean := stripBullet(line)
 
+		// --- Itens numerados ---
 		if isNumberedItem(line) {
+			if inSection {
+				sb.WriteString("</div></div>\n\n")
+				inSection = false
+			}
 			if inCard {
 				sb.WriteString("</div></div>\n\n")
 			}
@@ -119,13 +155,14 @@ func textToHTML(text string) string {
 			continue
 		}
 
+		// --- Conteúdo dentro de card ---
 		if inCard {
 			if line == "" {
 				continue
 			}
 			if isAdaLine(clean) {
-				_, val := splitMeta(clean)
 				flag, label := adaBlockMeta(clean)
+				_, val := splitMeta(clean)
 				fmt.Fprintf(&sb,
 					`<div style="background:#F5F3FF;border-left:3px solid #8B5CF6;padding:10px 14px;border-radius:0 8px 8px 0;margin:8px 0"><div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7C3AED;margin-bottom:5px">%s %s</div><div style="font-size:13px;color:#3B1F8C;line-height:1.65;font-style:italic">%s</div></div>`,
 					flag, label, safeHTML(val),
@@ -167,10 +204,35 @@ func textToHTML(text string) string {
 			continue
 		}
 
-		// Fora dos cards: intro e conclusão
+		// Ignora separadores e linhas vazias fora de cards
 		if line == "" || strings.HasPrefix(line, "---") {
 			continue
 		}
+
+		// --- Cabeçalhos de seção especial ---
+		if style, ok := detectSection(line); ok {
+			if inSection {
+				sb.WriteString("</div></div>\n\n")
+			}
+			fmt.Fprintf(&sb,
+				`<div style="background:%s;border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)"><div style="border-left:4px solid %s;padding:20px 24px"><div style="font-size:10px;font-weight:700;color:%s;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">%s %s</div>`,
+				style.bg, style.border, style.headerColor, style.emoji, safeHTML(line),
+			)
+			curStyle = style
+			inSection = true
+			continue
+		}
+
+		// --- Conteúdo de seção especial ---
+		if inSection {
+			fmt.Fprintf(&sb,
+				`<p style="margin:0 0 8px;color:%s;font-size:14px;line-height:1.75">%s</p>`,
+				curStyle.textColor, safeHTML(line),
+			)
+			continue
+		}
+
+		// --- Intro (linhas antes do primeiro item) ---
 		fmt.Fprintf(&sb,
 			`<div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:14px;color:#334155;font-size:15px;line-height:1.75">%s</div>`,
 			safeHTML(line),
@@ -180,12 +242,15 @@ func textToHTML(text string) string {
 	if inCard {
 		sb.WriteString("</div></div>\n\n")
 	}
+	if inSection {
+		sb.WriteString("</div></div>\n\n")
+	}
 
 	sb.WriteString(`</div>
 
 <div style="text-align:center;padding:20px 16px 32px;color:#94A3B8;font-size:12px;line-height:1.6">
   <div style="width:28px;height:1px;background:#CBD5E1;margin:0 auto 14px"></div>
-  Gerado automaticamente pelo <strong style="color:#64748B">Agente de Curadoria</strong>
+  Gerado automaticamente pelo <strong style="color:#64748B">Agente de Curadoria — Ada</strong>
 </div>
 
 </div>
@@ -287,7 +352,7 @@ func levelColor(val string) (bg, color string) {
 	}
 }
 
-// safeHTML escapa caracteres HTML e transforma URLs em links clicáveis.
+// safeHTML escapa HTML e transforma URLs em links clicáveis.
 func safeHTML(s string) string {
 	words := strings.Fields(s)
 	for i, w := range words {

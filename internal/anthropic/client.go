@@ -125,6 +125,7 @@ func (c *Client) buildPrompt() string {
 	default:
 		langInstr = "Escreva o digest inteiramente em português."
 	}
+	today := datePT(time.Now())
 
 	return fmt.Sprintf(`Você é Ada — uma IA de curadoria batizada em homenagem a Ada Lovelace, a primeira programadora da história.
 
@@ -171,7 +172,7 @@ Nível: Iniciante | Intermediário | Avançado
 
 ---
 
-Ao final, inclua obrigatoriamente estas duas seções:
+Ao final, inclua obrigatoriamente estas três seções:
 
 Ada's Pick da Semana / Ada's Pick of the Week
 O destaque mais relevante da semana com comentário de 4-6 frases em português seguido de 4-6 frases em inglês.
@@ -179,10 +180,22 @@ O destaque mais relevante da semana com comentário de 4-6 frases em português 
 Fatos Interessantes / Interesting Facts
 Duas ou três curiosidades técnicas ou históricas relacionadas aos temas cobertos. Pode incluir conexões com pioneiros da computação.
 
+Hoje na História / Today in History
+Hoje é %s. Liste 3 a 5 marcos históricos que ocorreram nesta data (mesmo dia e mês, qualquer ano) ao longo da história mundial — tecnologia, ciência, cultura, política. Inclua o ano de cada evento. Apresente em português e em inglês.
+
 Responda APENAS com o texto do digest, sem blocos de código ou markdown extra.`,
 		cfg.ItemQty,
 		strings.Join(cfg.Topics, ", "),
 		strings.Join(cfg.Formats, ", "),
 		langInstr,
+		today,
 	)
+}
+
+func datePT(t time.Time) string {
+	months := [...]string{"", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+		"julho", "agosto", "setembro", "outubro", "novembro", "dezembro"}
+	days := [...]string{"domingo", "segunda-feira", "terça-feira", "quarta-feira",
+		"quinta-feira", "sexta-feira", "sábado"}
+	return fmt.Sprintf("%s, %d de %s de %d", days[t.Weekday()], t.Day(), months[t.Month()], t.Year())
 }
