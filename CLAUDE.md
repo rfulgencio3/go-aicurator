@@ -2,14 +2,18 @@
 
 > Este arquivo fornece contexto e regras para assistentes de IA que trabalham neste repositório.
 > Leia-o inteiramente antes de sugerir qualquer mudança de código.
+> **Mantenha este arquivo e o README.md sempre atualizados após cada conjunto de mudanças.**
 
 ---
 
 ## Visão geral do projeto
 
-**go-aicurator** é um agente de curadoria de conteúdo escrito em Go, personificado pela **Ada** — uma IA com personalidade, humor mordaz e opiniões técnicas firmes, batizada em homenagem a Ada Lovelace.
+**go-aicurator** é um digest de tecnologia, ciência e cultura narrado por dois co-curadores com personalidades opostas:
 
-O agente busca conteúdos recentes sobre Tecnologia & IA, gera um digest bilíngue com comentários da Ada e envia por e-mail. Roda de forma autônoma via GitHub Actions.
+- **Ada** — homenagem a Ada Lovelace. Humor mordaz britânico, ceticismo técnico, anti-hype.
+- **Alan** — homenagem a Alan Turing. Entusiasta militante, matemático, centro-esquerda, pro-minorias.
+
+O agente busca conteúdos recentes, gera um digest bilíngue com comentários de ambos e envia por e-mail. Roda de forma autônoma via GitHub Actions.
 
 **Fluxo principal:**
 ```
@@ -44,11 +48,11 @@ go-aicurator/
 │   └── main.go                  # Entrypoint — orquestra os pacotes internos
 ├── internal/
 │   ├── anthropic/
-│   │   └── client.go            # Provider IA Anthropic + prompt da Ada
+│   │   └── client.go            # Provider IA Anthropic + prompt Ada & Alan
 │   ├── config/
 │   │   └── config.go            # Carrega e valida variáveis de ambiente
 │   ├── openai/
-│   │   └── client.go            # Provider IA OpenAI + prompt da Ada
+│   │   └── client.go            # Provider IA OpenAI + prompt Ada & Alan
 │   ├── resend/
 │   │   └── client.go            # Provider e-mail Resend + renderização HTML
 │   └── sendgrid/
@@ -111,12 +115,15 @@ Todas documentadas em `.env.example`. **Nunca** commite valores reais.
 | `RESEND_API_KEY` | Sim (se `EMAIL_PROVIDER=resend`) | — |
 | `SENDGRID_API_KEY` | Sim (se `EMAIL_PROVIDER=sendgrid`) | — |
 | `EMAIL_FROM` | Sim | — |
-| `EMAIL_FROM_NAME` | Não | `Agente de Curadoria` |
+| `EMAIL_FROM_NAME` | Não | `Ada & Alan News` |
 | `EMAIL_TO` | Sim | — (vírgula para múltiplos) |
-| `TOPICS` | Não | IA, ML, LLMs, Startups |
+| `TOPICS` | Não | 10 tópicos (ver abaixo) |
 | `FORMATS` | Não | Artigos, Papers, Vídeos |
 | `ITEM_QTY` | Não | `12` |
 | `LANG` | Não | `bilingual` |
+
+**Tópicos padrão (TOPICS):**
+Estruturas de Dados e Algoritmos, Inteligência Artificial e Machine Learning, LLMs e Modelos de Linguagem, Astronomia e Exploração Espacial, Neurociência e Comportamento Humano, Estoicismo e Filosofia Prática, Desenvolvimento Pessoal e Performance, Geopolítica e Relações Internacionais, Tempo e Clima, Tecnologia e Startups
 
 ---
 
@@ -155,20 +162,62 @@ go run .\cmd\main.go
 
 ---
 
-## Prompt da Ada
+## Prompt — Ada & Alan
 
-O prompt é construído em `buildPrompt()` — presente em `internal/openai/client.go` e `internal/anthropic/client.go`. Ambos devem ser mantidos em sincronia.
+O prompt é construído em `buildPrompt()` — presente em `internal/openai/client.go` e `internal/anthropic/client.go`. **Ambos devem ser mantidos em sincronia.**
 
-**Ada é:**
-- Uma IA com humor mordaz britânico e opiniões técnicas firmes
-- Ama Go e .NET; desconfia do ecossistema JavaScript; não reconhece PHP
-- Cita Dijkstra, Shannon, Turing, Knuth e von Neumann quando pertinente
-- Anti-hype: sinaliza buzzwords e promessas infundadas
+### Ada
+- Humor mordaz britânico, ceticismo técnico, anti-hype
+- Ama Go e .NET; desconfia do ecossistema JS; não reconhece PHP
+- Cita Dijkstra, Shannon, Turing, Knuth, von Neumann
 - Liberal: pro-privacidade, pro-open source
 
+### Alan
+- Entusiasta militante, matemático de coração, centro-esquerda
+- Ama JavaScript (Node, React, vanilla JS) como ferramenta de democratização
+- Pro-minorias: lembra que Turing foi perseguido pelo Estado
+- Cita Turing, Grace Hopper, Katherine Johnson, Dorothy Vaughan
+- Pragmático com PHP; discorda da Ada sobre JS explicitamente
+
+### Formato por item
+
+```
+N. Título do conteúdo
+Tipo: artigo | paper | vídeo | podcast | ferramenta | outro
+Resumo: duas frases técnicas e objetivas
+Ada diz: 2-4 frases em português
+Ada says: 2-4 frases em inglês
+Alan diz: 2-4 frases em português
+Alan says: 2-4 frases em inglês
+Link: URL principal
+Links relacionados: URL1 | URL2 | URL3
+Nível: Iniciante | Intermediário | Avançado
+
+# Apenas para itens de algoritmo/estrutura de dados:
+Exemplo: trace passo a passo com entrada pequena
+Complexidade: tempo O(?) | espaço O(?)
+Visualizar: URL de ferramenta visual (VisuAlgo, Algorithm Visualizer, etc.)
+```
+
+### Seções fixas ao final
+
+1. Ada's Pick da Semana / Ada's Pick of the Week
+2. Alan's Pick da Semana / Alan's Pick of the Week
+3. Fatos Interessantes / Interesting Facts
+4. Hoje na História / Today in History
+5. Livro da Semana / Book of the Week
+6. Canal/Vídeo em Destaque / Featured Channel or Video
+
+### Fontes e criadores preferenciais
+
+- Geopolítica: Clovis de Barros Filho
+- Neurociência: Miguel Nicolelis
+- Astronomia/Ciência: Sergio Sacani, Ciência Todo Dia, Ciência sem Fim
+- Tech/Dev: Fabio Akita, Professor HOK, Alura, Codecon, Hipsters.tech, Café Debug
+- Vídeos/Podcasts: Mano Deyvin, Lucas Montano, Flow podcast
+
 **Ao modificar o prompt:**
-- Mantenha o formato estruturado por item (Tipo, Resumo, Ada diz, Ada says, Link, Nível)
-- Mantenha as seções fixas ao final: Ada's Pick, Fatos Interessantes, Hoje na História
+- Mantenha sincronia entre `openai/client.go` e `anthropic/client.go`
 - Não remova a instrução de retornar apenas texto plano (sem markdown extra)
 - A data atual é injetada via `datePT(time.Now())` — não hardcode datas
 - Teste com `make run` antes de commitar
@@ -177,14 +226,33 @@ O prompt é construído em `buildPrompt()` — presente em `internal/openai/clie
 
 ## Renderização HTML do e-mail
 
-A função `textToHTML()` fica em cada cliente de e-mail (`resend/client.go`, `sendgrid/client.go`) e deve ser mantida em sincronia entre os dois.
+A função `textToHTML()` fica em cada cliente de e-mail e deve ser mantida **em sincronia** entre `resend/client.go` e `sendgrid/client.go`.
 
-O parser detecta:
-- Itens numerados → cards com borda esquerda roxa
-- `Ada diz:` / `Ada says:` → bloco roxo com bandeira PT/EN
-- `Nível:` → badge colorido (verde/roxo/vermelho)
-- `Link:` → botão "Acessar conteúdo →"
-- Cabeçalhos de seção (Ada's Pick, Fatos Interessantes, Hoje na História) → bloco temático
+### Elementos detectados e renderizados
+
+| Campo no texto | Renderização HTML |
+|---|---|
+| Itens numerados (`N.`) | Card branco com borda esquerda roxa + contador `01`, `02`... |
+| TOC ("Nesta edição") | Painel de sumário antes dos cards |
+| `Ada diz:` / `Ada says:` | Bloco roxo (`#F5F3FF`, borda `#8B5CF6`) com bandeira PT/EN |
+| `Alan diz:` / `Alan says:` | Bloco teal (`#F0FDFA`, borda `#14B8A6`) com bandeira PT/EN |
+| `Exemplo:` | Bloco monospace escuro (`#1E293B`, texto `#E2E8F0`) |
+| `Complexidade:` | Badge dark com texto cyan (`⚡ O(n log n)`) |
+| `Visualizar:` | Botão dark `👁 Visualizar algoritmo →` |
+| `Nível:` | Badge colorido (verde/roxo/vermelho) |
+| `Link:` | Botão `Acessar conteúdo →` |
+| `Links relacionados:` | Chips pill-shaped por URL |
+| Ada's Pick | Bloco roxo `⭐` |
+| Alan's Pick | Bloco teal `🏆` |
+| Fatos Interessantes | Bloco verde `💡` |
+| Hoje na História | Bloco laranja `📅` |
+| Livro da Semana | Bloco âmbar `📚` |
+| Canal/Vídeo em Destaque | Bloco vermelho `🎬` |
+
+### Header e footer
+
+- Header: wordmark `metria.` + avatares SVG minimalistas de Ada (fundo roxo, coque vitoriano) e Alan (fundo teal, cabelo curto)
+- Footer: `metria.` wordmark + "Ada & Alan" + link GitHub
 
 ---
 
@@ -201,8 +269,17 @@ O parser detecta:
 3. Instancie no `cmd/main.go` no switch da interface `mailer`.
 4. Implemente `textToHTML()` com o mesmo comportamento de `resend/client.go`.
 
+### Nova seção no digest
+1. Adicione a instrução no prompt (ambos os providers).
+2. Adicione entrada em `sectionStyles` e caso em `detectSection` (ambos os clientes de e-mail).
+
+### Novo campo por item
+1. Adicione keyword slice (ex: `var fooKeywords`), funções `isFooLine` e renderização no loop de cards.
+2. Replique em ambos os clientes de e-mail.
+3. Adicione instrução no prompt (ambos os providers).
+
 ### Novo tópico ou formato
-Apenas atualize `.env` — nenhuma mudança de código necessária.
+Apenas atualize `.env` ou o padrão em `config.go` — nenhuma mudança de código necessária.
 
 ---
 
@@ -215,4 +292,5 @@ Apenas atualize `.env` — nenhuma mudança de código necessária.
 - Sugerir `panic` como tratamento de erro em produção.
 - Alterar o `.gitignore` de forma que exponha secrets.
 - Desincronizar `buildPrompt()` entre `openai/client.go` e `anthropic/client.go`.
-- Desincronizar `textToHTML()` entre `resend/client.go` e `sendgrid/client.go`.
+- Desincronizar `textToHTML()` e helpers entre `resend/client.go` e `sendgrid/client.go`.
+- Commitar sem atualizar `README.md` e `CLAUDE.md` quando houver mudanças que afetem comportamento, configuração ou estrutura do projeto.

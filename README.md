@@ -1,22 +1,35 @@
-# Metria CuradorIA
+# Ada & Alan News
 
-**Ada** é uma IA de curadoria com personalidade: humor mordaz britânico, opiniões técnicas firmes e um detector de hype permanentemente ativado — batizada em homenagem a Ada Lovelace.
+Digest bilíngue de tecnologia, ciência e cultura narrado por dois co-curadores com perspectivas opostas:
 
-Toda segunda, quarta e sexta às 07h BRT, Ada busca os conteúdos mais relevantes sobre Tecnologia & IA, comenta com ironia (quando merece) e envia um digest bilíngue por e-mail.
+- **Ada** — batizada em homenagem a Ada Lovelace. Humor mordaz britânico, ceticismo técnico afiado, anti-hype declarada. Ama Go e .NET; não reconhece PHP como linguagem.
+- **Alan** — batizado em homenagem a Alan Turing. Entusiasta militante, matemático de coração, centro-esquerda, pro-minorias. Ama JavaScript, Node e React; defende a web como bem comum.
+
+Toda segunda, quarta e sexta às 07h BRT, Ada e Alan buscam os conteúdos mais relevantes e comentam cada item com perspectivas deliberadamente opostas — gerando um digest que informa e provoca.
 
 ## O que vem em cada digest
 
-- **12 itens** com resumo técnico + comentário pessoal da Ada em PT 🇧🇷 e EN 🇺🇸
-- **Ada's Pick da Semana** — o destaque com análise mais profunda
-- **Fatos Interessantes** — curiosidades técnicas e históricas da semana
-- **Hoje na História** — marcos históricos da data de hoje
+| Seção | Descrição |
+|---|---|
+| **N itens curados** | Resumo técnico + Ada diz + Ada says + Alan diz + Alan says, link e nível |
+| **Algoritmos/DS** | Campos extras: trace passo a passo, complexidade O(n), link para visualização |
+| **Ada's Pick da Semana** | Destaque da Ada com análise aprofundada (PT + EN) |
+| **Alan's Pick da Semana** | Destaque do Alan com perspectiva diferente (PT + EN) |
+| **Fatos Interessantes** | Curiosidades técnicas e históricas dos temas cobertos |
+| **Hoje na História** | Marcos históricos do dia ao longo da história mundial |
+| **Livro da Semana** | Recomendação de Ada ou Alan com link de compra (Amazon Brasil) |
+| **Canal/Vídeo em Destaque** | Vídeo ou podcast relevante da semana |
+
+## Tópicos cobertos (padrão)
+
+Estruturas de Dados e Algoritmos · IA e Machine Learning · LLMs · Astronomia · Neurociência · Estoicismo e Filosofia · Desenvolvimento Pessoal · Geopolítica · Tempo e Clima · Tecnologia e Startups
 
 ## Pré-requisitos
 
 - Go 1.22+
 - Chave da [API OpenAI](https://platform.openai.com) (ou Anthropic)
 - Chave da [API Resend](https://resend.com) (ou SendGrid)
-- Domínio ou e-mail verificado no Resend
+- Domínio ou e-mail verificado no provedor de e-mail
 
 ## Configuração local
 
@@ -27,7 +40,12 @@ cp .env.example .env
 
 **Windows (PowerShell):**
 ```powershell
-foreach ($line in Get-Content .env) { if ($line -match '^[^#]') { [System.Environment]::SetEnvironmentVariable(($line -split '=')[0], ($line -split '=',2)[1]) } }
+foreach ($line in Get-Content .env) {
+  if ($line -match '^[^#].+=') {
+    $parts = $line -split '=', 2
+    [System.Environment]::SetEnvironmentVariable($parts[0], $parts[1])
+  }
+}
 go run .\cmd\main.go
 ```
 
@@ -38,20 +56,20 @@ make run
 
 ## Deploy via GitHub Actions (recomendado)
 
-O agendamento roda automaticamente via `.github/workflows/digest.yml` — sem servidor necessário.
+Agendamento automático via `.github/workflows/digest.yml` — sem servidor necessário.
 
 ### Secrets obrigatórios
 
-No repositório: **Settings → Secrets and variables → Actions**
+**Settings → Secrets and variables → Actions**
 
 | Secret | Descrição |
 |---|---|
 | `OPENAI_API_KEY` | Chave da API OpenAI |
 | `RESEND_API_KEY` | Chave da API Resend |
-| `EMAIL_FROM` | E-mail remetente verificado no Resend |
+| `EMAIL_FROM` | E-mail remetente verificado |
 | `EMAIL_TO` | Destinatário(s), separados por vírgula |
 
-Para usar Anthropic no lugar da OpenAI, substitua `OPENAI_API_KEY` por `ANTHROPIC_API_KEY` e altere `AI_PROVIDER: openai` → `AI_PROVIDER: anthropic` no workflow.
+Para usar Anthropic, substitua `OPENAI_API_KEY` por `ANTHROPIC_API_KEY` e altere `AI_PROVIDER: openai` → `AI_PROVIDER: anthropic` no workflow.
 
 ### Disparo manual
 
@@ -70,9 +88,9 @@ Para usar Anthropic no lugar da OpenAI, substitua `OPENAI_API_KEY` por `ANTHROPI
 | `RESEND_API_KEY` | Sim (se resend) | — |
 | `SENDGRID_API_KEY` | Sim (se sendgrid) | — |
 | `EMAIL_FROM` | Sim | — |
-| `EMAIL_FROM_NAME` | Não | `Agente de Curadoria` |
-| `EMAIL_TO` | Sim | — |
-| `TOPICS` | Não | IA, ML, LLMs, Startups |
+| `EMAIL_FROM_NAME` | Não | `Ada & Alan News` |
+| `EMAIL_TO` | Sim | — (vírgula para múltiplos) |
+| `TOPICS` | Não | 10 tópicos padrão (ver `.env.example`) |
 | `FORMATS` | Não | Artigos, Papers, Vídeos |
 | `ITEM_QTY` | Não | `12` |
 | `LANG` | Não | `bilingual` |
@@ -83,21 +101,22 @@ Para usar Anthropic no lugar da OpenAI, substitua `OPENAI_API_KEY` por `ANTHROPI
 go-aicurator/
 ├── .github/
 │   └── workflows/
-│       └── digest.yml          # Agendamento via GitHub Actions
+│       └── digest.yml          # Cron: seg, qua, sex às 07h BRT (10h UTC)
 ├── cmd/
 │   └── main.go                 # Entrypoint
 ├── internal/
 │   ├── anthropic/
-│   │   └── client.go           # Provider IA: Anthropic + prompt Ada
+│   │   └── client.go           # Provider IA: Anthropic + prompt Ada & Alan
 │   ├── config/
 │   │   └── config.go           # Variáveis de ambiente
 │   ├── openai/
-│   │   └── client.go           # Provider IA: OpenAI + prompt Ada
+│   │   └── client.go           # Provider IA: OpenAI + prompt Ada & Alan
 │   ├── resend/
-│   │   └── client.go           # Provider e-mail: Resend
+│   │   └── client.go           # Provider e-mail: Resend + renderização HTML
 │   └── sendgrid/
-│       └── client.go           # Provider e-mail: SendGrid
+│       └── client.go           # Provider e-mail: SendGrid + renderização HTML
 ├── .env.example
+├── CLAUDE.md
 ├── Makefile
 └── go.mod
 ```
@@ -109,8 +128,11 @@ go-aicurator/
 | `make build` | Compila o binário `./curator` |
 | `make run` | Carrega `.env` e executa (Linux/macOS/Git Bash) |
 | `make tidy` | Roda `go mod tidy` |
-| `make install-cron` | Instala cron local (Linux/macOS) |
 
-## Ada — Persona
+## Ada & Alan — Personas
 
-Ada ama Go e .NET, tolera JavaScript com ressalvas e se recusa a reconhecer PHP como linguagem de programação. Cita Dijkstra, Shannon e Turing quando pertinente. Detecta hype corporativo com precisão cirúrgica e tem opiniões sobre tudo — sempre embasadas tecnicamente.
+**Ada** ama Go e .NET, tolera JavaScript com ressalvas e se recusa a reconhecer PHP como linguagem. Cita Dijkstra, Shannon e Turing quando pertinente. Detecta hype corporativo com precisão cirúrgica.
+
+**Alan** é o contraponto: defende JavaScript como ferramenta de democratização, lembra que Turing foi perseguido pelo Estado, celebra Grace Hopper e Katherine Johnson. Acredita que toda tecnologia é política.
+
+O debate entre os dois é o coração do digest.
