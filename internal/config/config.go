@@ -78,7 +78,7 @@ func Load() (*Config, error) {
 		}
 	}
 
-	qty, err := strconv.Atoi(envOr("ITEM_QTY", "8"))
+	qty, err := strconv.Atoi(envOr("ITEM_QTY", "12"))
 	if err != nil || qty < 1 {
 		return nil, fmt.Errorf("ITEM_QTY inválido")
 	}
