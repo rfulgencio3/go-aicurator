@@ -157,6 +157,8 @@ Busque %d conteúdos recentes e relevantes sobre: %s.
 Formatos desejados: %s.
 %s
 
+IMPORTANTE: títulos em texto simples — sem **, *, # ou qualquer marcador markdown.
+
 Para cada item, use EXATAMENTE este formato (sem omitir nenhum campo):
 
 N. Título do conteúdo
@@ -164,7 +166,8 @@ Tipo: artigo | paper | vídeo | podcast | ferramenta | outro
 Resumo: duas frases técnicas e objetivas
 Ada diz: 2-4 frases em português com a opinião pessoal da Ada
 Ada says: 2-4 frases em inglês — mesma opinião, não tradução literal
-Link: URL ou fonte
+Link: URL principal
+Links relacionados: URL1 | URL2 | URL3
 Nível: Iniciante | Intermediário | Avançado
 
 ---

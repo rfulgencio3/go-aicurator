@@ -55,7 +55,7 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("EMAIL_PROVIDER deve ser resend ou sendgrid")
 	}
 	c.EmailFrom = mustEnv("EMAIL_FROM")
-	c.EmailFromName = envOr("EMAIL_FROM_NAME", "Agente de Curadoria")
+	c.EmailFromName = envOr("EMAIL_FROM_NAME", "Metria CuradorIA")
 
 	toRaw := mustEnv("EMAIL_TO")
 	for _, e := range strings.Split(toRaw, ",") {
