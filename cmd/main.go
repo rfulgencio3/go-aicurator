@@ -8,6 +8,7 @@ import (
 
 	"github.com/seu-usuario/go-aicurator/internal/anthropic"
 	"github.com/seu-usuario/go-aicurator/internal/config"
+	"github.com/seu-usuario/go-aicurator/internal/resend"
 	"github.com/seu-usuario/go-aicurator/internal/sendgrid"
 )
 
@@ -28,9 +29,19 @@ func main() {
 
 	subject := fmt.Sprintf("Curadoria Tecnologia & IA — %s", time.Now().Format("02/01/2006"))
 
-	log.Printf("Enviando e-mail para %v...", cfg.EmailTo)
-	sg := sendgrid.New(cfg)
-	if err := sg.Send(subject, digest); err != nil {
+	log.Printf("Enviando e-mail para %v via %s...", cfg.EmailTo, cfg.EmailProvider)
+
+	type mailer interface {
+		Send(subject, body string) error
+	}
+	var m mailer
+	switch cfg.EmailProvider {
+	case "resend":
+		m = resend.New(cfg)
+	case "sendgrid":
+		m = sendgrid.New(cfg)
+	}
+	if err := m.Send(subject, digest); err != nil {
 		log.Fatalf("erro ao enviar e-mail: %v", err)
 	}
 

@@ -1,0 +1,38 @@
+name: Digest Curadoria IA
+
+on:
+  schedule:
+    # 07h BRT (UTC-3) = 10h UTC — seg, qua, sex
+    - cron: "0 10 * * 1,3,5"
+  workflow_dispatch: # permite disparo manual pelo GitHub
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+      EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      # Preencha apenas o secret do provider que for usar:
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+      EMAIL_PROVIDER: resend
+      EMAIL_FROM_NAME: ${{ vars.EMAIL_FROM_NAME }}
+      ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
+      TOPICS: ${{ vars.TOPICS }}
+      FORMATS: ${{ vars.FORMATS }}
+      ITEM_QTY: ${{ vars.ITEM_QTY }}
+      LANG: ${{ vars.LANG }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Run digest
+        run: go run ./cmd/main.go

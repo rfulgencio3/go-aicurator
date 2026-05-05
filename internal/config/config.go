@@ -12,7 +12,9 @@ type Config struct {
 	AnthropicAPIKey string
 	AnthropicModel  string
 
-	// SendGrid
+	// E-mail
+	EmailProvider string // "resend" | "sendgrid"
+	ResendAPIKey  string
 	SendGridAPIKey  string
 	EmailFrom       string
 	EmailFromName   string
@@ -31,7 +33,15 @@ func Load() (*Config, error) {
 	c.AnthropicAPIKey = mustEnv("ANTHROPIC_API_KEY")
 	c.AnthropicModel = envOr("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
 
-	c.SendGridAPIKey = mustEnv("SENDGRID_API_KEY")
+	c.EmailProvider = envOr("EMAIL_PROVIDER", "resend")
+	switch c.EmailProvider {
+	case "resend":
+		c.ResendAPIKey = mustEnv("RESEND_API_KEY")
+	case "sendgrid":
+		c.SendGridAPIKey = mustEnv("SENDGRID_API_KEY")
+	default:
+		return nil, fmt.Errorf("EMAIL_PROVIDER deve ser resend ou sendgrid")
+	}
 	c.EmailFrom = mustEnv("EMAIL_FROM")
 	c.EmailFromName = envOr("EMAIL_FROM_NAME", "Agente de Curadoria")
 
