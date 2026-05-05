@@ -15,6 +15,7 @@ jobs:
       EMAIL_TO: ${{ secrets.EMAIL_TO }}
       AI_PROVIDER: openai
       EMAIL_PROVIDER: resend
+      DIGEST_LANG: bilingual
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

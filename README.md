@@ -93,7 +93,8 @@ Para usar Anthropic, substitua `OPENAI_API_KEY` por `ANTHROPIC_API_KEY` e altere
 | `TOPICS` | Não | 10 tópicos padrão (ver `.env.example`) |
 | `FORMATS` | Não | Artigos, Papers, Vídeos |
 | `ITEM_QTY` | Não | `12` |
-| `LANG` | Não | `bilingual` |
+| `DIGEST_LANG` | Não | `bilingual` |
+| `LANG` | Não | legado; use `DIGEST_LANG` |
 
 ## Estrutura do projeto
 

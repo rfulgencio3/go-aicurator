@@ -120,7 +120,8 @@ Todas documentadas em `.env.example`. **Nunca** commite valores reais.
 | `TOPICS` | Não | 10 tópicos (ver abaixo) |
 | `FORMATS` | Não | Artigos, Papers, Vídeos |
 | `ITEM_QTY` | Não | `12` |
-| `LANG` | Não | `bilingual` |
+| `DIGEST_LANG` | Não | `bilingual` |
+| `LANG` | Não | legado; use `DIGEST_LANG` |
 
 **Tópicos padrão (TOPICS):**
 Estruturas de Dados e Algoritmos, Inteligência Artificial e Machine Learning, LLMs e Modelos de Linguagem, Astronomia e Exploração Espacial, Neurociência e Comportamento Humano, Estoicismo e Filosofia Prática, Desenvolvimento Pessoal e Performance, Geopolítica e Relações Internacionais, Tempo e Clima, Tecnologia e Startups

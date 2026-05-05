@@ -16,12 +16,12 @@ type Config struct {
 	OpenAIModel     string
 
 	// E-mail
-	EmailProvider string // "resend" | "sendgrid"
-	ResendAPIKey  string
-	SendGridAPIKey  string
-	EmailFrom       string
-	EmailFromName   string
-	EmailTo         []string
+	EmailProvider  string // "resend" | "sendgrid"
+	ResendAPIKey   string
+	SendGridAPIKey string
+	EmailFrom      string
+	EmailFromName  string
+	EmailTo        []string
 
 	// Curadoria
 	Topics  []string
@@ -84,12 +84,43 @@ func Load() (*Config, error) {
 	}
 	c.ItemQty = qty
 
-	c.Lang = envOr("LANG", "bilingual")
-	if c.Lang != "pt" && c.Lang != "en" && c.Lang != "bilingual" {
-		return nil, fmt.Errorf("LANG deve ser pt, en ou bilingual")
+	lang, err := digestLang()
+	if err != nil {
+		return nil, err
 	}
+	c.Lang = lang
 
 	return c, nil
+}
+
+func digestLang() (string, error) {
+	if v := strings.TrimSpace(os.Getenv("DIGEST_LANG")); v != "" {
+		if isDigestLang(v) {
+			return v, nil
+		}
+		return "", fmt.Errorf("DIGEST_LANG deve ser pt, en ou bilingual")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("LANG")); v != "" {
+		if isDigestLang(v) {
+			return v, nil
+		}
+		if isLocaleLang(v) {
+			return "bilingual", nil
+		}
+		return "", fmt.Errorf("LANG deve ser pt, en ou bilingual")
+	}
+
+	return "bilingual", nil
+}
+
+func isDigestLang(v string) bool {
+	return v == "pt" || v == "en" || v == "bilingual"
+}
+
+func isLocaleLang(v string) bool {
+	upper := strings.ToUpper(v)
+	return upper == "C" || upper == "POSIX" || strings.ContainsAny(v, "._")
 }
 
 func mustEnv(key string) string {
