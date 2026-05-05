@@ -64,7 +64,7 @@ func Load() (*Config, error) {
 		}
 	}
 
-	topicsRaw := envOr("TOPICS", "Inteligência Artificial e Machine Learning,LLMs e Modelos de Linguagem,Astronomia e Exploração Espacial,Neurociência e Comportamento Humano,Estoicismo e Filosofia Prática,Desenvolvimento Pessoal e Performance,Geopolítica e Relações Internacionais,Tempo e Clima,Tecnologia e Startups")
+	topicsRaw := envOr("TOPICS", "Estruturas de Dados e Algoritmos,Inteligência Artificial e Machine Learning,LLMs e Modelos de Linguagem,Astronomia e Exploração Espacial,Neurociência e Comportamento Humano,Estoicismo e Filosofia Prática,Desenvolvimento Pessoal e Performance,Geopolítica e Relações Internacionais,Tempo e Clima,Tecnologia e Startups")
 	for _, t := range strings.Split(topicsRaw, ",") {
 		if v := strings.TrimSpace(t); v != "" {
 			c.Topics = append(c.Topics, v)

@@ -218,6 +218,11 @@ Link: URL principal
 Links relacionados: URL1 | URL2 | URL3
 Nível: Iniciante | Intermediário | Avançado
 
+Para itens cujo Tipo seja algoritmo ou estrutura de dados, adicione obrigatoriamente:
+Exemplo: trace passo a passo com entrada pequena (ex: ordenar [5,3,8,1,9,2] → Passo 1: ..., Passo 2: ..., Resultado: [1,2,3,5,8,9])
+Complexidade: tempo O(?) | espaço O(?)
+Visualizar: URL de ferramenta visual (VisuAlgo https://visualgo.net, Algorithm Visualizer, CS50 Shorts, etc.)
+
 ---
 
 Ao final, inclua obrigatoriamente estas quatro seções:

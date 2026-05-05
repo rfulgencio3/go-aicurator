@@ -250,6 +250,33 @@ func textToHTML(text string) string {
 				)
 				continue
 			}
+			if isExampleLine(clean) {
+				_, val := splitMeta(clean)
+				fmt.Fprintf(&sb,
+					`<div style="background:#1E293B;border-radius:8px;padding:12px 16px;margin:10px 0;font-family:'Courier New',Courier,monospace;font-size:12px;color:#E2E8F0;line-height:1.75;white-space:pre-wrap;word-break:break-word">%s</div>`,
+					safeHTMLRaw(val),
+				)
+				continue
+			}
+			if isComplexityLine(clean) {
+				_, val := splitMeta(clean)
+				fmt.Fprintf(&sb,
+					`<div style="margin:8px 0"><span style="display:inline-block;background:#0F172A;color:#38BDF8;font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;font-family:'Courier New',Courier,monospace;letter-spacing:0.3px">⚡ %s</span></div>`,
+					safeHTML(val),
+				)
+				continue
+			}
+			if isVisualizeLine(clean) {
+				_, val := splitMeta(clean)
+				url := strings.TrimSpace(val)
+				if strings.HasPrefix(url, "http") {
+					fmt.Fprintf(&sb,
+						`<a href="%s" style="display:inline-block;margin-top:8px;background:#0F172A;color:#38BDF8;font-size:12px;font-weight:600;padding:6px 16px;border-radius:8px;text-decoration:none">👁 Visualizar algoritmo →</a>`,
+						url,
+					)
+				}
+				continue
+			}
 			if isRelatedLinksLine(clean) {
 				_, val := splitMeta(clean)
 				sb.WriteString(renderRelatedLinks(val))
@@ -391,6 +418,9 @@ var metaKeywords = []string{"Tipo", "Type", "Fonte", "Source", "Formato", "Forma
 var levelKeywords = []string{"Nível", "Level", "Nivel"}
 var linkKeywords = []string{"Link", "URL", "Url"}
 var relatedKeywords = []string{"Links relacionados", "Related links", "Leituras relacionadas"}
+var exampleKeywords = []string{"Exemplo", "Example"}
+var complexityKeywords = []string{"Complexidade", "Complexity"}
+var visualizeKeywords = []string{"Visualizar", "Visualize", "Visualização"}
 
 func adaBlockMeta(line string) (flag, label string) {
 	if strings.HasPrefix(line, "Ada says") {
@@ -458,6 +488,41 @@ func isRelatedLinksLine(line string) bool {
 		}
 	}
 	return false
+}
+
+func isExampleLine(line string) bool {
+	for _, k := range exampleKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return false
+}
+
+func isComplexityLine(line string) bool {
+	for _, k := range complexityKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return false
+}
+
+func isVisualizeLine(line string) bool {
+	for _, k := range visualizeKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return false
+}
+
+// safeHTMLRaw escapa HTML sem transformar URLs em links — para blocos de código.
+func safeHTMLRaw(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	return s
 }
 
 func splitMeta(line string) (key, val string) {
