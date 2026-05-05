@@ -125,9 +125,10 @@ func textToHTML(text string) string {
 			}
 			if isAdaLine(clean) {
 				_, val := splitMeta(clean)
+				flag, label := adaBlockMeta(clean)
 				fmt.Fprintf(&sb,
-					`<div style="background:#F5F3FF;border-left:3px solid #8B5CF6;padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0"><div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7C3AED;margin-bottom:5px">Ada diz</div><div style="font-size:13px;color:#3B1F8C;line-height:1.65;font-style:italic">%s</div></div>`,
-					safeHTML(val),
+					`<div style="background:#F5F3FF;border-left:3px solid #8B5CF6;padding:10px 14px;border-radius:0 8px 8px 0;margin:8px 0"><div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7C3AED;margin-bottom:5px">%s %s</div><div style="font-size:13px;color:#3B1F8C;line-height:1.65;font-style:italic">%s</div></div>`,
+					flag, label, safeHTML(val),
 				)
 				continue
 			}
@@ -222,6 +223,13 @@ var adaKeywords = []string{"Ada diz", "Ada says"}
 var metaKeywords = []string{"Tipo", "Type", "Fonte", "Source", "Formato", "Format"}
 var levelKeywords = []string{"Nível", "Level", "Nivel"}
 var linkKeywords = []string{"Link", "URL", "Url"}
+
+func adaBlockMeta(line string) (flag, label string) {
+	if strings.HasPrefix(line, "Ada says") {
+		return "🇺🇸", "Ada says"
+	}
+	return "🇧🇷", "Ada diz"
+}
 
 func isAdaLine(line string) bool {
 	for _, k := range adaKeywords {
