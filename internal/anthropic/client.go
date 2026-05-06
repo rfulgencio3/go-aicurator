@@ -120,6 +120,7 @@ func stripDisclaimer(text string) string {
 		"não tenho acesso",
 		"simulação do digest",
 		"i'm unable",
+		"i'm sorry",
 		"i cannot",
 		"i am unable",
 		"as of my knowledge",
@@ -127,6 +128,12 @@ func stripDisclaimer(text string) string {
 		"aqui está uma simulação",
 		"com base no meu conhecimento",
 		"conhecimento atualizado até",
+		"however, i can help",
+		"based on available information",
+		"i can help generate",
+		"here is a sample digest",
+		"aqui está um exemplo",
+		"aqui está uma lista",
 	}
 	var out []string
 	for _, line := range strings.Split(text, "\n") {
@@ -283,10 +290,9 @@ Ada diz: 2-4 frases em português com a opinião pessoal da Ada
 Ada says: 2-4 frases em inglês — mesma opinião, não tradução literal
 Alan diz: 2-4 frases em português com a opinião pessoal do Alan
 Alan says: 2-4 frases em inglês — mesma opinião, não tradução literal
-Link: URL real e verificada da publicação. Se não tiver certeza da URL exata, omita este campo completamente.
-Links relacionados: URLs reais adicionais separadas por |. Se não tiver URLs verificadas, omita este campo completamente.
+Link: URL da publicação. Se souber a URL exata, use-a. Se não souber o path exato, use o domínio base real (ex: https://arxiv.org, https://github.com/org/repo, https://nature.com). Omita somente se não souber nem o domínio. NUNCA invente domínios fictícios.
+Links relacionados: Mesmas regras — URL exata ou domínio base real, separados por |. Omita se completamente incerto.
 Nível: Iniciante | Intermediário | Avançado
-NUNCA invente ou adivinhe URLs. Um campo omitido é melhor que um link quebrado.
 
 Para itens cujo Tipo seja algoritmo ou estrutura de dados, adicione obrigatoriamente:
 Exemplo: trace passo a passo com entrada pequena (ex: ordenar [5,3,8,1,9,2] → Passo 1: ..., Passo 2: ..., Resultado: [1,2,3,5,8,9])
@@ -298,13 +304,19 @@ Visualizar: URL de ferramenta visual (VisuAlgo https://visualgo.net, Algorithm V
 Ao final, inclua obrigatoriamente estas quatro seções:
 
 Ada's Pick da Semana / Ada's Pick of the Week
-O destaque mais relevante da semana na perspectiva da Ada, com comentário de 4-6 frases em português seguido de 4-6 frases em inglês.
+Formato OBRIGATÓRIO — cada parágrafo em UMA linha com PT e EN separados por " | ":
+[análise em português] | [analysis in English]
+Escreva 2-3 linhas neste formato bilíngue. O conteúdo PT e EN deve ser equivalente em substância.
 
 Alan's Pick da Semana / Alan's Pick of the Week
-O destaque mais relevante da semana na perspectiva do Alan, com comentário de 4-6 frases em português seguido de 4-6 frases em inglês.
+Formato OBRIGATÓRIO — cada parágrafo em UMA linha com PT e EN separados por " | ":
+[análise em português] | [analysis in English]
+Escreva 2-3 linhas neste formato bilíngue. O conteúdo PT e EN deve ser equivalente em substância.
 
 Fatos Interessantes / Interesting Facts
-Duas ou três curiosidades técnicas ou históricas relacionadas aos temas cobertos. Pode incluir conexões com pioneiros da computação.
+Formato OBRIGATÓRIO — uma linha por fato, PT e EN na mesma linha separados por " | ":
+[fato em português] | [fact in English]
+Escreva 3-5 fatos técnicos ou históricos relacionados aos temas cobertos. Pode incluir conexões com pioneiros da computação.
 
 Hoje na História / Today in History
 Hoje é %s. Liste 3 a 5 marcos históricos que ocorreram nesta data (mesmo dia e mês, qualquer ano) ao longo da história mundial — tecnologia, ciência, cultura, política. Inclua o ano de cada evento.
@@ -312,10 +324,21 @@ Formato obrigatório — uma linha por evento, PT e EN separados por |:
 [data em português]: [descrição em português] | [date in English]: [description in English]
 
 Livro da Semana / Book of the Week
-Ada ou Alan recomenda um livro relacionado a algum tema coberto nesta edição. Inclua: título completo, autor, 2-3 frases de por que vale ler, e link para compra (Amazon Brasil quando disponível).
+Ada ou Alan recomenda um livro relacionado a algum tema coberto nesta edição.
+Formato OBRIGATÓRIO — inclua os campos na ordem abaixo:
+Título: [título completo do livro]
+Autor: [nome do autor]
+[motivo em português] | [reason in English]
+[segunda frase em português] | [second sentence in English]
+Link: [URL de compra — Amazon Brasil (amazon.com.br) de preferência, ou amazon.com — use o domínio base se não souber o link exato]
 
 Canal/Vídeo em Destaque / Featured Channel or Video
-Um vídeo ou episódio de podcast relevante da semana. Priorize canais: Ciência Todo Dia, Ciência sem Fim, Mano Deyvin, Lucas Montano, Fabio Akita, Alura, Codecon, Hipsters.tech, Café Debug, Flow podcast. Inclua: nome do canal, título do vídeo/episódio, 2-3 frases de por que vale assistir, e link.
+Um vídeo ou episódio de podcast relevante da semana. Priorize canais: Ciência Todo Dia, Ciência sem Fim, Mano Deyvin, Lucas Montano, Fabio Akita, Alura, Codecon, Hipsters.tech, Café Debug, Flow podcast.
+Formato OBRIGATÓRIO — inclua os campos na ordem abaixo:
+Canal: [nome do canal]
+Vídeo: [título do vídeo ou episódio]
+[motivo em português] | [reason in English]
+Link: [URL do vídeo — YouTube, Spotify, ou canal oficial — use o domínio base se não souber o link exato]
 
 Responda APENAS com o texto do digest, sem blocos de código ou markdown extra.`,
 		cfg.ItemQty,

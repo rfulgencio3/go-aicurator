@@ -178,8 +178,12 @@ func textToHTML(text string) string {
       <div style="font-size:9px;color:#818CF8;margin-top:2px">Ada Lovelace</div>
       <div style="font-size:9px;color:#475569;margin-top:4px;font-style:italic">Ceticismo técnico</div>
     </td>
-    <td style="vertical-align:middle;padding:0 10px">
-      <div style="color:#334155;font-size:11px;font-weight:800;letter-spacing:2px">VS</div>
+    <td style="vertical-align:middle;padding:0 14px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div style="width:1px;height:18px;background:rgba(255,255,255,0.12)"></div>
+        <div style="color:#818CF8;font-size:18px;font-weight:800">&amp;</div>
+        <div style="width:1px;height:18px;background:rgba(255,255,255,0.12)"></div>
+      </div>
     </td>
     <td style="text-align:center;padding:0 20px;vertical-align:top">
 `)
@@ -329,7 +333,7 @@ func textToHTML(text string) string {
 				if strings.HasPrefix(url, "http") && !isFakeURL(url) {
 					cardHasLink = true
 					fmt.Fprintf(&sb,
-						`<a href="%s" style="display:inline-block;margin-top:12px;font-size:13px;color:#6366F1;text-decoration:none;font-weight:600">Acessar conteúdo →</a>`,
+						`<a href="%s" style="display:inline-block;margin-top:12px;background:#6366F1;color:white;font-size:12px;font-weight:600;padding:7px 18px;border-radius:20px;text-decoration:none">Acessar conteúdo →</a>`,
 						escapeURL(url),
 					)
 				}
@@ -351,6 +355,17 @@ func textToHTML(text string) string {
 		}
 
 		if inSection {
+			if isLinkLine(clean) {
+				_, val := splitMeta(clean)
+				url := strings.TrimSpace(val)
+				if strings.HasPrefix(url, "http") && !isFakeURL(url) {
+					fmt.Fprintf(&sb,
+						`<a href="%s" style="display:inline-block;margin-top:12px;background:%s;color:white;font-size:13px;font-weight:600;padding:8px 20px;border-radius:20px;text-decoration:none">Acessar →</a>`,
+						escapeURL(url), curStyle.border,
+					)
+				}
+				continue
+			}
 			if idx := strings.Index(clean, " | "); idx >= 0 {
 				pt := strings.TrimSpace(clean[:idx])
 				en := strings.TrimSpace(clean[idx+3:])
@@ -418,7 +433,7 @@ func searchFallback(title string, hasLink bool) string {
 	}
 	url := "https://duckduckgo.com/?q=" + encodeQuery(title)
 	return fmt.Sprintf(
-		`<a href="%s" style="display:inline-block;margin-top:12px;font-size:13px;color:#94A3B8;text-decoration:none;font-weight:600">🔍 Pesquisar →</a>`,
+		`<a href="%s" style="display:inline-block;margin-top:12px;background:#F1F5F9;color:#64748B;font-size:12px;font-weight:600;padding:7px 18px;border-radius:20px;text-decoration:none">🔍 Pesquisar →</a>`,
 		escapeURL(url),
 	)
 }
