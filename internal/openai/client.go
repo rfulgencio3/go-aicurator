@@ -287,7 +287,9 @@ Fatos Interessantes / Interesting Facts
 Duas ou três curiosidades técnicas ou históricas relacionadas aos temas cobertos. Pode incluir conexões com pioneiros da computação.
 
 Hoje na História / Today in History
-Hoje é %s. Liste 3 a 5 marcos históricos que ocorreram nesta data (mesmo dia e mês, qualquer ano) ao longo da história mundial — tecnologia, ciência, cultura, política. Inclua o ano de cada evento. Apresente em português e em inglês.
+Hoje é %s. Liste 3 a 5 marcos históricos que ocorreram nesta data (mesmo dia e mês, qualquer ano) ao longo da história mundial — tecnologia, ciência, cultura, política. Inclua o ano de cada evento.
+Formato obrigatório — uma linha por evento, PT e EN separados por |:
+[data em português]: [descrição em português] | [date in English]: [description in English]
 
 Livro da Semana / Book of the Week
 Ada ou Alan recomenda um livro relacionado a algum tema coberto nesta edição. Inclua: título completo, autor, 2-3 frases de por que vale ler, e link para compra (Amazon Brasil quando disponível).

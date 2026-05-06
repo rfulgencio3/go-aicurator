@@ -199,16 +199,44 @@ func textToHTML(text string) string {
 	inCard := false
 	inSection := false
 	var curStyle sectionStyle
+	var cardTitle string
+	var cardHasLink bool
 
 	for _, raw := range lines {
 		line := strings.TrimRight(raw, " \t")
 		clean := stripBullet(line)
 
+		if line == "" || strings.HasPrefix(line, "---") {
+			continue
+		}
+
+		// Section detection has priority — closes any open card before opening the section block.
+		if style, ok := detectSection(line); ok {
+			if inCard {
+				sb.WriteString(searchFallback(cardTitle, cardHasLink))
+				sb.WriteString("</div></div>\n\n")
+				inCard = false
+			}
+			if inSection {
+				sb.WriteString("</div></div>\n\n")
+			}
+			fmt.Fprintf(&sb,
+				`<div style="background:%s;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)"><div style="border-left:4px solid %s;padding:20px 24px"><div style="font-size:10px;font-weight:700;color:%s;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">%s %s</div>`,
+				style.bg, style.border, style.headerColor, style.emoji, safeHTML(line),
+			)
+			curStyle = style
+			inSection = true
+			continue
+		}
+
 		if !inSection && isNumberedItem(line) {
 			if inCard {
+				sb.WriteString(searchFallback(cardTitle, cardHasLink))
 				sb.WriteString("</div></div>\n\n")
 			}
 			num, title := splitNumberedItem(line)
+			cardTitle = title
+			cardHasLink = false
 			padded := num
 			if len(padded) == 1 {
 				padded = "0" + padded
@@ -222,9 +250,6 @@ func textToHTML(text string) string {
 		}
 
 		if inCard {
-			if line == "" {
-				continue
-			}
 			if isAdaLine(clean) {
 				flag, label := adaBlockMeta(clean)
 				_, val := splitMeta(clean)
@@ -288,6 +313,7 @@ func textToHTML(text string) string {
 				_, val := splitMeta(clean)
 				url := strings.TrimSpace(val)
 				if strings.HasPrefix(url, "http") && !isFakeURL(url) {
+					cardHasLink = true
 					fmt.Fprintf(&sb,
 						`<a href="%s" style="display:inline-block;margin-top:12px;font-size:13px;color:#6366F1;text-decoration:none;font-weight:600">Acessar conteúdo →</a>`,
 						escapeURL(url),
@@ -307,23 +333,6 @@ func textToHTML(text string) string {
 				`<p style="margin:0 0 10px;color:#475569;font-size:14px;line-height:1.7">%s</p>`,
 				safeHTML(line),
 			)
-			continue
-		}
-
-		if line == "" || strings.HasPrefix(line, "---") {
-			continue
-		}
-
-		if style, ok := detectSection(line); ok {
-			if inSection {
-				sb.WriteString("</div></div>\n\n")
-			}
-			fmt.Fprintf(&sb,
-				`<div style="background:%s;border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)"><div style="border-left:4px solid %s;padding:20px 24px"><div style="font-size:10px;font-weight:700;color:%s;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">%s %s</div>`,
-				style.bg, style.border, style.headerColor, style.emoji, safeHTML(line),
-			)
-			curStyle = style
-			inSection = true
 			continue
 		}
 
@@ -352,6 +361,7 @@ func textToHTML(text string) string {
 	}
 
 	if inCard {
+		sb.WriteString(searchFallback(cardTitle, cardHasLink))
 		sb.WriteString("</div></div>\n\n")
 	}
 	if inSection {
@@ -387,6 +397,35 @@ func isFakeURL(url string) bool {
 		}
 	}
 	return !strings.Contains(url, ".")
+}
+
+func searchFallback(title string, hasLink bool) string {
+	if hasLink || title == "" {
+		return ""
+	}
+	url := "https://duckduckgo.com/?q=" + encodeQuery(title)
+	return fmt.Sprintf(
+		`<a href="%s" style="display:inline-block;margin-top:12px;font-size:13px;color:#94A3B8;text-decoration:none;font-weight:600">🔍 Pesquisar →</a>`,
+		escapeURL(url),
+	)
+}
+
+func encodeQuery(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9',
+			r == '-', r == '_', r == '.', r == '~':
+			b.WriteRune(r)
+		case r == ' ':
+			b.WriteByte('+')
+		default:
+			for _, c := range []byte(string(r)) {
+				fmt.Fprintf(&b, "%%%02X", c)
+			}
+		}
+	}
+	return b.String()
 }
 
 func renderRelatedLinks(val string) string {
