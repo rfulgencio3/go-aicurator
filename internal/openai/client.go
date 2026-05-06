@@ -57,6 +57,7 @@ type contentBlock struct {
 func (c *Client) GenerateDigest() (string, error) {
 	body := requestBody{
 		Model: c.cfg.OpenAIModel,
+		Tools: []tool{{Type: "web_search_preview"}},
 		Input: buildPrompt(c.cfg),
 	}
 
