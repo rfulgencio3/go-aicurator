@@ -259,8 +259,14 @@ A função `textToHTML()` fica em cada cliente de e-mail e deve ser mantida **em
 
 ### Header e footer
 
-- Header: wordmark `metria.` + avatares SVG minimalistas de Ada (fundo roxo, coque vitoriano) e Alan (fundo teal, cabelo curto)
-- Footer: `metria.` wordmark + "Ada & Alan" + link GitHub
+- Header: layout em `<table>` (compatibilidade máxima com email clients) — wordmark `metria.` + tagline `Ada & Alan News` + separador **VS** entre avatares SVG de Ada e Alan, cada um com descriptor de persona (*"Ceticismo técnico"* / *"Entusiasmo militante"*)
+- Footer: `metria.` wordmark + link GitHub
+
+### Conteúdo bilíngue em seções
+Linhas com ` | ` dentro de qualquer seção (Ada's Pick, Alan's Pick, Fatos, Hoje na História, Livro, Canal) são renderizadas como dois blocos com flags 🇧🇷 / 🇺🇸.
+
+### Guard de card dentro de seção
+`isNumberedItem` só abre card quando `!inSection`. Itens numerados dentro de seções (ex: `01.`, `02.` nos Fatos Interessantes) ficam como parágrafos do bloco, não como cards.
 
 ---
 

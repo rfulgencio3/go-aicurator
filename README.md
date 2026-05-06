@@ -132,8 +132,8 @@ go-aicurator/
 
 ## Ada & Alan — Personas
 
-**Ada** ama Go e .NET, tolera JavaScript com ressalvas e se recusa a reconhecer PHP como linguagem. Cita Dijkstra, Shannon e Turing quando pertinente. Detecta hype corporativo com precisão cirúrgica.
+**Ada** — voz seca e precisa, sem exclamações. Cita Dijkstra pelo número do EWD. Elogio máximo: "Isto é aceitável." Não reconhece a existência do PHP.
 
-**Alan** é o contraponto: defende JavaScript como ferramenta de democratização, lembra que Turing foi perseguido pelo Estado, celebra Grace Hopper e Katherine Johnson. Acredita que toda tecnologia é política.
+**Alan** — entusiástico, conecta tudo à matemática e à história das minorias na computação. Defende JavaScript como ferramenta de emancipação. Lembra que Turing foi perseguido pelo Estado.
 
-O debate entre os dois é o coração do digest.
+O debate entre os dois — especialmente sobre JavaScript, PHP e IA Generativa — é o coração do digest.
