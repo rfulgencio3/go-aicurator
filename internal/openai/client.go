@@ -12,7 +12,7 @@ import (
 	"github.com/seu-usuario/go-aicurator/internal/config"
 )
 
-const apiURL = "https://api.openai.com/v1/responses"
+const apiURL = "https://api.openai.com/v1/chat/completions"
 
 type Client struct {
 	cfg        *config.Config
@@ -27,38 +27,33 @@ func New(cfg *config.Config) *Client {
 }
 
 type requestBody struct {
-	Model string `json:"model"`
-	Tools []tool `json:"tools,omitempty"`
-	Input string `json:"input"`
+	Model     string    `json:"model"`
+	Messages  []message `json:"messages"`
+	MaxTokens int       `json:"max_tokens"`
 }
 
-type tool struct {
-	Type string `json:"type"`
+type message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
 type responseBody struct {
-	Output []outputItem `json:"output"`
-	Error  *struct {
+	Choices []struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	} `json:"choices"`
+	Error *struct {
 		Message string `json:"message"`
 	} `json:"error"`
 }
 
-type outputItem struct {
-	Type    string          `json:"type"`
-	Content []contentBlock  `json:"content"`
-}
-
-type contentBlock struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
-}
-
-// GenerateDigest chama a Responses API da OpenAI e retorna o texto do digest.
+// GenerateDigest chama a Chat Completions API da OpenAI e retorna o texto do digest.
 func (c *Client) GenerateDigest() (string, error) {
 	body := requestBody{
-		Model: c.cfg.OpenAIModel,
-		Tools: []tool{{Type: "web_search_preview"}},
-		Input: buildPrompt(c.cfg),
+		Model:     c.cfg.OpenAIModel,
+		MaxTokens: 8192,
+		Messages:  []message{{Role: "user", Content: buildPrompt(c.cfg)}},
 	}
 
 	payload, err := json.Marshal(body)
@@ -93,23 +88,11 @@ func (c *Client) GenerateDigest() (string, error) {
 		return "", fmt.Errorf("API error: %s", result.Error.Message)
 	}
 
-	var parts []string
-	for _, item := range result.Output {
-		if item.Type != "message" {
-			continue
-		}
-		for _, block := range item.Content {
-			if block.Type == "output_text" && strings.TrimSpace(block.Text) != "" {
-				parts = append(parts, block.Text)
-			}
-		}
-	}
-
-	if len(parts) == 0 {
+	if len(result.Choices) == 0 || strings.TrimSpace(result.Choices[0].Message.Content) == "" {
 		return "", fmt.Errorf("resposta vazia da API")
 	}
 
-	return strings.Join(parts, "\n"), nil
+	return result.Choices[0].Message.Content, nil
 }
 
 func buildPrompt(cfg *config.Config) string {
