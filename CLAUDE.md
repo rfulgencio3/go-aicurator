@@ -24,7 +24,9 @@ GitHub Actions (cron)
   → crawler.Merge(old,fresh) // deduplica com cache JSON anterior
   → crawler.SaveCache()      // persiste via actions/cache
   → [openai|anthropic].GenerateDigest(articlesCtx)  // curadoria sobre artigos reais
-  → [resend|sendgrid].Send()
+  → tts.GenerateMP3()          // opcional: gera podcast MP3 (TTS_ENABLED=true)
+  → ghrelease.UploadPodcast()  // opcional: publica MP3 no GitHub Releases
+  → [resend|sendgrid].Send()   // email com botão 🎙 se URL de podcast disponível
 ```
 
 ---
@@ -37,6 +39,8 @@ GitHub Actions (cron)
 | Módulo | `github.com/seu-usuario/go-aicurator` |
 | Provider de IA | OpenAI (padrão, `gpt-4o`) ou Anthropic (`claude-sonnet-4-20250514` + `web_search_20250305` quando sem artigos RSS) |
 | Crawler RSS | `internal/crawler/client.go` — stdlib puro (`net/http` + `encoding/xml`), 10 feeds padrão, cache JSON via GitHub Actions |
+| TTS (podcast) | `internal/tts/client.go` — OpenAI TTS API (`tts-1`), 3 vozes (narrador `onyx` / Ada `nova` / Alan `echo`), MP3 concatenado |
+| GitHub Release | `internal/ghrelease/client.go` — upload do MP3 como asset de release, URL retornada para o email |
 | Provider de e-mail | Resend (padrão) ou SendGrid |
 | Agendamento | GitHub Actions (`.github/workflows/digest.yml`) |
 | Dependências externas | Nenhuma — apenas stdlib Go |
@@ -61,12 +65,16 @@ go-aicurator/
 │   │   └── config.go            # Carrega e valida variáveis de ambiente
 │   ├── crawler/
 │   │   └── client.go            # Crawler RSS/Atom — coleta artigos reais (stdlib)
+│   ├── ghrelease/
+│   │   └── client.go            # Upload do podcast MP3 para GitHub Releases
 │   ├── openai/
 │   │   └── client.go            # Provider IA OpenAI + prompt Ada & Alan
 │   ├── resend/
 │   │   └── client.go            # Provider e-mail Resend + renderização HTML
-│   └── sendgrid/
-│       └── client.go            # Provider e-mail SendGrid + renderização HTML
+│   ├── sendgrid/
+│   │   └── client.go            # Provider e-mail SendGrid + renderização HTML
+│   └── tts/
+│       └── client.go            # Geração de áudio MP3 via OpenAI TTS
 ├── .env.example
 ├── .gitignore
 ├── Makefile

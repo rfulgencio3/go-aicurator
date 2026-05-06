@@ -100,6 +100,13 @@ Para usar Anthropic, substitua `OPENAI_API_KEY` por `ANTHROPIC_API_KEY` e altere
 | `CRAWL_MAX_AGE_DAYS` | Não | `7` |
 | `CRAWL_MAX_ITEMS` | Não | `60` |
 | `ARTICLE_CACHE` | Não | `articles.json` |
+| `TTS_ENABLED` | Não | `false` |
+| `TTS_MODEL` | Não | `tts-1` |
+| `TTS_NARRATOR_VOICE` | Não | `onyx` |
+| `TTS_ADA_VOICE` | Não | `nova` |
+| `TTS_ALAN_VOICE` | Não | `echo` |
+| `TTS_ITEM_LIMIT` | Não | `5` |
+| `TTS_OUTPUT_FILE` | Não | `podcast.mp3` |
 
 ## Estrutura do projeto
 
@@ -117,6 +124,10 @@ go-aicurator/
 │   │   └── config.go           # Variáveis de ambiente
 │   ├── crawler/
 │   │   └── client.go           # Crawler RSS/Atom — coleta artigos reais
+│   ├── ghrelease/
+│   │   └── client.go           # Upload de podcast MP3 para GitHub Releases
+│   ├── tts/
+│   │   └── client.go           # Geração de áudio via OpenAI TTS
 │   ├── openai/
 │   │   └── client.go           # Provider IA: OpenAI + prompt Ada & Alan
 │   ├── resend/

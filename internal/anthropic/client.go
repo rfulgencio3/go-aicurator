@@ -30,7 +30,7 @@ func New(cfg *config.Config) *Client {
 type requestBody struct {
 	Model     string    `json:"model"`
 	MaxTokens int       `json:"max_tokens"`
-	Tools     []tool    `json:"tools"`
+	Tools     []tool    `json:"tools,omitempty"`
 	Messages  []message `json:"messages"`
 }
 
@@ -267,6 +267,10 @@ TENSÃO EXPLÍCITA Ada × Alan (use nas opiniões dos itens):
 
 ---
 
+REGRA DE COMENTÁRIO (Ada e Alan): Cada comentário responde diretamente ao conteúdo específico do artigo. A personalidade se manifesta no TOM e no ENQUADRAMENTO — nunca no desvio de assunto. Ada cita Dijkstra, Knuth ou Shannon apenas quando o artigo trata de algoritmos, correção formal, design de linguagens, teoria da computação ou matemática. Alan menciona inclusão social, minorias ou Turing apenas quando o artigo tem dimensão histórica, social ou política genuína. Um artigo sobre redesign de interface não justifica citação de Dijkstra. Um artigo sobre eletrodomésticos não precisa de manifesto sobre emancipação social. Regra objetiva: o assunto do comentário é o artigo; a personalidade é o como, não o quê.
+
+---
+
 TAREFA:
 Selecione %d conteúdos recentes e relevantes sobre: %s.
 Formatos desejados: %s.
@@ -289,7 +293,7 @@ Para cada item, use EXATAMENTE este formato (sem omitir nenhum campo obrigatóri
 
 N. Título do conteúdo
 Tipo: artigo | paper | vídeo | podcast | ferramenta | outro
-Resumo: duas frases técnicas e objetivas
+Resumo: três a quatro frases técnicas e objetivas — o que é, como funciona (mecanismo central), por que é relevante agora e qual o impacto prático esperado
 Ada diz: 2-4 frases em português com a opinião pessoal da Ada
 Ada says: 2-4 frases em inglês — mesma opinião, não tradução literal
 Alan diz: 2-4 frases em português com a opinião pessoal do Alan

@@ -35,6 +35,19 @@ type Config struct {
 	CrawlMaxAgeDays  int
 	CrawlMaxItems    int
 	ArticleCacheFile string
+
+	// TTS (podcast de áudio via OpenAI)
+	TTSEnabled       bool
+	TTSModel         string
+	TTSNarratorVoice string
+	TTSAdaVoice      string
+	TTSAlanVoice     string
+	TTSItemLimit     int
+	TTSOutputFile    string
+
+	// GitHub Release (hospedagem do MP3)
+	GithubToken      string
+	GithubRepository string
 }
 
 func Load() (*Config, error) {
@@ -117,6 +130,31 @@ func Load() (*Config, error) {
 	c.CrawlMaxItems = maxItems
 
 	c.ArticleCacheFile = envOr("ARTICLE_CACHE", "articles.json")
+
+	c.TTSEnabled = envOr("TTS_ENABLED", "false") == "true"
+	if c.TTSEnabled {
+		// TTS always uses the OpenAI API — load the key if not already loaded.
+		if c.OpenAIAPIKey == "" {
+			c.OpenAIAPIKey = os.Getenv("OPENAI_API_KEY")
+		}
+		if c.OpenAIAPIKey == "" {
+			fmt.Fprintln(os.Stderr, "aviso: TTS_ENABLED=true mas OPENAI_API_KEY não definida — áudio desativado")
+			c.TTSEnabled = false
+		}
+	}
+	c.TTSModel = envOr("TTS_MODEL", "tts-1")
+	c.TTSNarratorVoice = envOr("TTS_NARRATOR_VOICE", "onyx")
+	c.TTSAdaVoice = envOr("TTS_ADA_VOICE", "nova")
+	c.TTSAlanVoice = envOr("TTS_ALAN_VOICE", "echo")
+	ttsLimit, err := strconv.Atoi(envOr("TTS_ITEM_LIMIT", "5"))
+	if err != nil || ttsLimit < 0 {
+		return nil, fmt.Errorf("TTS_ITEM_LIMIT inválido")
+	}
+	c.TTSItemLimit = ttsLimit
+	c.TTSOutputFile = envOr("TTS_OUTPUT_FILE", "podcast.mp3")
+
+	c.GithubToken = os.Getenv("GITHUB_TOKEN")
+	c.GithubRepository = os.Getenv("GITHUB_REPOSITORY")
 
 	return c, nil
 }

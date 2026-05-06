@@ -32,3 +32,6 @@ jobs:
         run: go run ./cmd/main.go
         env:
           ARTICLE_CACHE: articles.json
+          TTS_ENABLED: ${{ vars.TTS_ENABLED || 'false' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}

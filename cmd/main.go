@@ -3,14 +3,17 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/seu-usuario/go-aicurator/internal/anthropic"
 	"github.com/seu-usuario/go-aicurator/internal/config"
 	"github.com/seu-usuario/go-aicurator/internal/crawler"
+	"github.com/seu-usuario/go-aicurator/internal/ghrelease"
 	"github.com/seu-usuario/go-aicurator/internal/openai"
 	"github.com/seu-usuario/go-aicurator/internal/resend"
 	"github.com/seu-usuario/go-aicurator/internal/sendgrid"
+	"github.com/seu-usuario/go-aicurator/internal/tts"
 )
 
 func main() {
@@ -52,6 +55,35 @@ func main() {
 	digest, err := ai.GenerateDigest(articlesCtx)
 	if err != nil {
 		log.Fatalf("erro ao gerar digest: %v", err)
+	}
+
+	// ── Geração de áudio (TTS) ───────────────────────────────────────────────
+	if cfg.TTSEnabled {
+		ttsClient := tts.New(cfg)
+		segments := tts.ParseScript(digest, cfg.TTSNarratorVoice, cfg.TTSAdaVoice, cfg.TTSAlanVoice, cfg.TTSItemLimit)
+		log.Printf("TTS: gerando áudio para %d segmentos...", len(segments))
+
+		mp3, err := ttsClient.GenerateMP3(segments)
+		if err != nil {
+			log.Printf("TTS: aviso — falha na geração de áudio: %v", err)
+		} else {
+			if err := os.WriteFile(cfg.TTSOutputFile, mp3, 0644); err != nil {
+				log.Printf("TTS: aviso — não foi possível salvar %s: %v", cfg.TTSOutputFile, err)
+			} else {
+				log.Printf("TTS: áudio salvo em %s (%d bytes)", cfg.TTSOutputFile, len(mp3))
+			}
+
+			if cfg.GithubToken != "" && cfg.GithubRepository != "" {
+				ghClient := ghrelease.New(cfg.GithubToken, cfg.GithubRepository)
+				podcastURL, err := ghClient.UploadPodcast(mp3, time.Now())
+				if err != nil {
+					log.Printf("TTS: aviso — falha no upload do podcast: %v", err)
+				} else {
+					log.Printf("TTS: podcast publicado em %s", podcastURL)
+					digest += "\nPODCAST: " + podcastURL
+				}
+			}
+		}
 	}
 
 	subject := fmt.Sprintf("%s — %s", cfg.EmailFromName, time.Now().Format("02/01/2006"))

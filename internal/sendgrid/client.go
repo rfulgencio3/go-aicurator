@@ -228,6 +228,28 @@ func textToHTML(text string) string {
 			continue
 		}
 
+		// Linha de podcast — renderiza botão de destaque antes das seções.
+		if isPodcastLine(clean) {
+			if inCard {
+				sb.WriteString(searchFallback(cardTitle, cardHasLink))
+				sb.WriteString("</div></div>\n\n")
+				inCard = false
+			}
+			if inSection {
+				sb.WriteString("</div></div>\n\n")
+				inSection = false
+			}
+			_, val := splitMeta(clean)
+			url := strings.TrimSpace(val)
+			if strings.HasPrefix(url, "http") && !isFakeURL(url) {
+				fmt.Fprintf(&sb,
+					`<div style="text-align:center;margin:28px 0 12px"><a href="%s" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#7C3AED 0%%,#4F46E5 100%%);color:white;font-size:14px;font-weight:700;padding:14px 30px;border-radius:32px;text-decoration:none;box-shadow:0 4px 14px rgba(99,102,241,.35)">🎙 Ouça o podcast desta edição →</a></div>`,
+					escapeURL(url),
+				)
+			}
+			continue
+		}
+
 		// Section detection has priority — closes any open card before opening the section block.
 		if style, ok := detectSection(line); ok {
 			if inCard {
@@ -611,6 +633,10 @@ func isComplexityLine(line string) bool {
 		}
 	}
 	return false
+}
+
+func isPodcastLine(line string) bool {
+	return strings.HasPrefix(line, "PODCAST:")
 }
 
 func isVisualizeLine(line string) bool {
