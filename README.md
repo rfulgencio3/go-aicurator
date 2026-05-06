@@ -5,7 +5,7 @@ Digest bilíngue de tecnologia, ciência e cultura narrado por dois co-curadores
 - **Ada** — batizada em homenagem a Ada Lovelace. Humor mordaz britânico, ceticismo técnico afiado, anti-hype declarada. Ama Go e .NET; não reconhece PHP como linguagem.
 - **Alan** — batizado em homenagem a Alan Turing. Entusiasta militante, matemático de coração, centro-esquerda, pro-minorias. Ama JavaScript, Node e React; defende a web como bem comum.
 
-Toda segunda, quarta e sexta às 07h BRT, Ada e Alan buscam os conteúdos mais relevantes e comentam cada item com perspectivas deliberadamente opostas — gerando um digest que informa e provoca.
+Toda segunda, quarta e sexta às 07h BRT, Ada e Alan comentam artigos reais coletados automaticamente de feeds RSS — gerando um digest que informa e provoca com fontes verificadas.
 
 ## O que vem em cada digest
 
@@ -95,6 +95,11 @@ Para usar Anthropic, substitua `OPENAI_API_KEY` por `ANTHROPIC_API_KEY` e altere
 | `ITEM_QTY` | Não | `12` |
 | `DIGEST_LANG` | Não | `bilingual` |
 | `LANG` | Não | legado; use `DIGEST_LANG` |
+| `CRAWL_ENABLED` | Não | `true` |
+| `RSS_FEEDS` | Não | 10 feeds padrão (ver `.env.example`) |
+| `CRAWL_MAX_AGE_DAYS` | Não | `7` |
+| `CRAWL_MAX_ITEMS` | Não | `60` |
+| `ARTICLE_CACHE` | Não | `articles.json` |
 
 ## Estrutura do projeto
 
@@ -110,6 +115,8 @@ go-aicurator/
 │   │   └── client.go           # Provider IA: Anthropic + prompt Ada & Alan
 │   ├── config/
 │   │   └── config.go           # Variáveis de ambiente
+│   ├── crawler/
+│   │   └── client.go           # Crawler RSS/Atom — coleta artigos reais
 │   ├── openai/
 │   │   └── client.go           # Provider IA: OpenAI + prompt Ada & Alan
 │   ├── resend/

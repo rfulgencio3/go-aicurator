@@ -62,8 +62,12 @@ func (c *Client) GenerateDigest(articlesCtx string) (string, error) {
 	body := requestBody{
 		Model:     c.cfg.AnthropicModel,
 		MaxTokens: 8192,
-		Tools:     []tool{{Type: "web_search_20250305", Name: "web_search"}},
 		Messages:  []message{{Role: "user", Content: prompt}},
+	}
+	// Inclui web_search apenas quando não há artigos RSS injetados.
+	// Com contexto real disponível o tool é redundante e gera custo extra.
+	if articlesCtx == "" {
+		body.Tools = []tool{{Type: "web_search_20250305", Name: "web_search"}}
 	}
 
 	payload, err := json.Marshal(body)

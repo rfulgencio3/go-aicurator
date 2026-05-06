@@ -13,11 +13,18 @@
 - **Ada** — homenagem a Ada Lovelace. Humor mordaz britânico, ceticismo técnico, anti-hype.
 - **Alan** — homenagem a Alan Turing. Entusiasta militante, matemático, centro-esquerda, pro-minorias.
 
-O agente busca conteúdos recentes, gera um digest bilíngue com comentários de ambos e envia por e-mail. Roda de forma autônoma via GitHub Actions.
+O agente coleta artigos reais de feeds RSS, gera um digest bilíngue com comentários de Ada e Alan e envia por e-mail. Roda de forma autônoma via GitHub Actions.
 
 **Fluxo principal:**
 ```
-GitHub Actions (cron) → cmd/main.go → config.Load() → [openai|anthropic].GenerateDigest() → [resend|sendgrid].Send()
+GitHub Actions (cron)
+  → cmd/main.go
+  → config.Load()
+  → crawler.Fetch()          // RSS feeds em paralelo → artigos reais com URLs
+  → crawler.Merge(old,fresh) // deduplica com cache JSON anterior
+  → crawler.SaveCache()      // persiste via actions/cache
+  → [openai|anthropic].GenerateDigest(articlesCtx)  // curadoria sobre artigos reais
+  → [resend|sendgrid].Send()
 ```
 
 ---
@@ -28,7 +35,8 @@ GitHub Actions (cron) → cmd/main.go → config.Load() → [openai|anthropic].G
 |---|---|
 | Linguagem | Go 1.22+ |
 | Módulo | `github.com/seu-usuario/go-aicurator` |
-| Provider de IA | OpenAI (padrão, `gpt-4o`, Chat Completions API — sem web search) ou Anthropic (`claude-sonnet-4-20250514` + `web_search_20250305`) |
+| Provider de IA | OpenAI (padrão, `gpt-4o`) ou Anthropic (`claude-sonnet-4-20250514` + `web_search_20250305` quando sem artigos RSS) |
+| Crawler RSS | `internal/crawler/client.go` — stdlib puro (`net/http` + `encoding/xml`), 10 feeds padrão, cache JSON via GitHub Actions |
 | Provider de e-mail | Resend (padrão) ou SendGrid |
 | Agendamento | GitHub Actions (`.github/workflows/digest.yml`) |
 | Dependências externas | Nenhuma — apenas stdlib Go |
@@ -51,6 +59,8 @@ go-aicurator/
 │   │   └── client.go            # Provider IA Anthropic + prompt Ada & Alan
 │   ├── config/
 │   │   └── config.go            # Carrega e valida variáveis de ambiente
+│   ├── crawler/
+│   │   └── client.go            # Crawler RSS/Atom — coleta artigos reais (stdlib)
 │   ├── openai/
 │   │   └── client.go            # Provider IA OpenAI + prompt Ada & Alan
 │   ├── resend/
@@ -122,6 +132,11 @@ Todas documentadas em `.env.example`. **Nunca** commite valores reais.
 | `ITEM_QTY` | Não | `12` |
 | `DIGEST_LANG` | Não | `bilingual` |
 | `LANG` | Não | legado; use `DIGEST_LANG` |
+| `CRAWL_ENABLED` | Não | `true` |
+| `RSS_FEEDS` | Não | 10 feeds padrão (ver `internal/crawler/client.go`) |
+| `CRAWL_MAX_AGE_DAYS` | Não | `7` |
+| `CRAWL_MAX_ITEMS` | Não | `60` |
+| `ARTICLE_CACHE` | Não | `articles.json` |
 
 **Tópicos padrão (TOPICS):**
 Estruturas de Dados e Algoritmos, Inteligência Artificial e Machine Learning, LLMs e Modelos de Linguagem, Astronomia e Exploração Espacial, Neurociência e Comportamento Humano, Estoicismo e Filosofia Prática, Desenvolvimento Pessoal e Performance, Geopolítica e Relações Internacionais, Tempo e Clima, Tecnologia e Startups
@@ -273,7 +288,7 @@ Linhas com ` | ` dentro de qualquer seção (Ada's Pick, Alan's Pick, Fatos, Hoj
 ## Adicionando novas funcionalidades
 
 ### Novo provider de IA
-1. Crie `internal/<provider>/client.go` com método `GenerateDigest() (string, error)`.
+1. Crie `internal/<provider>/client.go` com método `GenerateDigest(articlesCtx string) (string, error)`.
 2. Adicione as variáveis em `internal/config/config.go` no switch de `AI_PROVIDER`.
 3. Instancie no `cmd/main.go` no switch da interface `digester`.
 
@@ -309,4 +324,7 @@ Apenas atualize `.env` ou o padrão em `config.go` — nenhuma mudança de códi
 - Desincronizar `textToHTML()`, `isFakeURL()`, `stripDisclaimer()` e helpers entre os clientes de e-mail e IA.
 - Remover `stripDisclaimer()` de um cliente sem remover do outro.
 - Remover `isFakeURL()` de `resend/client.go` sem remover de `sendgrid/client.go`.
+- Desincronizar `isSectionMetaLine()` e `sectionMetaKeywords` entre `resend/client.go` e `sendgrid/client.go`.
+- Alterar a assinatura de `GenerateDigest` em um provider de IA sem replicar no outro.
+- Commitar `articles.json` — ele está no `.gitignore` e deve ser persistido apenas via GitHub Actions Cache.
 - Commitar sem atualizar `README.md` e `CLAUDE.md` quando houver mudanças que afetem comportamento, configuração ou estrutura do projeto.

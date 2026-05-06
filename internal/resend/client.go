@@ -352,6 +352,14 @@ func textToHTML(text string) string {
 				}
 				continue
 			}
+			if isSectionMetaLine(clean) {
+				key, val := splitMeta(clean)
+				fmt.Fprintf(&sb,
+					`<div style="font-size:12px;color:%s;margin-bottom:6px;opacity:0.85"><span style="font-weight:700;text-transform:uppercase;letter-spacing:0.5px;font-size:10px">%s</span> %s</div>`,
+					curStyle.textColor, safeHTML(key), safeHTML(val),
+				)
+				continue
+			}
 			if idx := strings.Index(clean, " | "); idx >= 0 {
 				pt := strings.TrimSpace(clean[:idx])
 				en := strings.TrimSpace(clean[idx+3:])
@@ -495,6 +503,16 @@ var relatedKeywords = []string{"Links relacionados", "Related links", "Leituras 
 var exampleKeywords = []string{"Exemplo", "Example"}
 var complexityKeywords = []string{"Complexidade", "Complexity"}
 var visualizeKeywords = []string{"Visualizar", "Visualize", "Visualização"}
+var sectionMetaKeywords = []string{"Título", "Autor", "Canal", "Vídeo", "Video", "Author", "Title", "Channel"}
+
+func isSectionMetaLine(line string) bool {
+	for _, k := range sectionMetaKeywords {
+		if strings.HasPrefix(line, k+":") {
+			return true
+		}
+	}
+	return false
+}
 
 func adaBlockMeta(line string) (flag, label string) {
 	if strings.HasPrefix(line, "Ada says") {

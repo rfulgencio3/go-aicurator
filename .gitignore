@@ -27,3 +27,6 @@ coverage.out
 
 # macOS
 .DS_Store
+
+# Cache do crawler RSS (gerado localmente — persistido via GitHub Actions Cache em CI)
+articles.json
