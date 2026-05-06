@@ -15,14 +15,14 @@ import (
 const apiURL = "https://api.openai.com/v1/responses"
 
 type Client struct {
-	cfg  *config.Config
-	http *http.Client
+	cfg        *config.Config
+	httpClient *http.Client
 }
 
 func New(cfg *config.Config) *Client {
 	return &Client{
-		cfg:  cfg,
-		http: &http.Client{Timeout: 120 * time.Second},
+		cfg:        cfg,
+		httpClient: &http.Client{Timeout: 120 * time.Second},
 	}
 }
 
@@ -73,7 +73,7 @@ func (c *Client) GenerateDigest() (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.cfg.OpenAIAPIKey)
 
-	resp, err := c.http.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("chamar API: %w", err)
 	}

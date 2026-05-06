@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/seu-usuario/go-aicurator/internal/anthropic"
@@ -30,6 +29,8 @@ func main() {
 		ai = anthropic.New(cfg)
 	case "openai":
 		ai = openai.New(cfg)
+	default:
+		log.Fatalf("provider de IA não suportado: %s", cfg.AIProvider)
 	}
 
 	log.Printf("Gerando digest via %s...", cfg.AIProvider)
@@ -38,7 +39,7 @@ func main() {
 		log.Fatalf("erro ao gerar digest: %v", err)
 	}
 
-	subject := fmt.Sprintf("Metria CuradorIA — %s", time.Now().Format("02/01/2006"))
+	subject := fmt.Sprintf("%s — %s", cfg.EmailFromName, time.Now().Format("02/01/2006"))
 
 	log.Printf("Enviando e-mail para %v via %s...", cfg.EmailTo, cfg.EmailProvider)
 
@@ -51,11 +52,12 @@ func main() {
 		m = resend.New(cfg)
 	case "sendgrid":
 		m = sendgrid.New(cfg)
+	default:
+		log.Fatalf("provider de e-mail não suportado: %s", cfg.EmailProvider)
 	}
 	if err := m.Send(subject, digest); err != nil {
 		log.Fatalf("erro ao enviar e-mail: %v", err)
 	}
 
 	log.Println("Digest enviado com sucesso!")
-	os.Exit(0)
 }

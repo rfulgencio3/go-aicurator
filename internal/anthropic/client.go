@@ -15,14 +15,14 @@ import (
 const apiURL = "https://api.anthropic.com/v1/messages"
 
 type Client struct {
-	cfg    *config.Config
-	http   *http.Client
+	cfg        *config.Config
+	httpClient *http.Client
 }
 
 func New(cfg *config.Config) *Client {
 	return &Client{
-		cfg:  cfg,
-		http: &http.Client{Timeout: 120 * time.Second},
+		cfg:        cfg,
+		httpClient: &http.Client{Timeout: 120 * time.Second},
 	}
 }
 
@@ -61,7 +61,7 @@ func (c *Client) GenerateDigest() (string, error) {
 
 	body := requestBody{
 		Model:     c.cfg.AnthropicModel,
-		MaxTokens: 2048,
+		MaxTokens: 8192,
 		Tools:     []tool{{Type: "web_search_20250305", Name: "web_search"}},
 		Messages:  []message{{Role: "user", Content: prompt}},
 	}
@@ -79,7 +79,7 @@ func (c *Client) GenerateDigest() (string, error) {
 	req.Header.Set("x-api-key", c.cfg.AnthropicAPIKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 
-	resp, err := c.http.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("chamar API: %w", err)
 	}

@@ -19,14 +19,14 @@ const adaAvatarSVG = `<svg width="56" height="56" viewBox="0 0 56 56" xmlns="htt
 const alanAvatarSVG = `<svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg"><circle cx="28" cy="28" r="28" fill="#0D9488"/><path d="M12 56Q28 50 44 56" fill="#0F766E"/><path d="M24 42L28 47L32 42L30 38L26 38Z" fill="white" opacity="0.85"/><rect x="24" y="37" width="8" height="7" rx="2" fill="#F5C8A0"/><ellipse cx="28" cy="29" rx="11" ry="12" fill="#F5C8A0"/><ellipse cx="16" cy="29" rx="2.5" ry="3.5" fill="#F0B890"/><ellipse cx="40" cy="29" rx="2.5" ry="3.5" fill="#F0B890"/><ellipse cx="28" cy="18" rx="12" ry="8" fill="#5D3D2E"/><path d="M16 17Q22 13 28 15Q34 13 40 17" fill="#4A3025"/><rect x="15" y="19" width="4" height="8" rx="2" fill="#4A3025"/><rect x="37" y="19" width="4" height="8" rx="2" fill="#4A3025"/><ellipse cx="23" cy="28" rx="1.8" ry="2" fill="#1C1040"/><ellipse cx="33" cy="28" rx="1.8" ry="2" fill="#1C1040"/><circle cx="23.7" cy="27.3" r="0.6" fill="white"/><circle cx="33.7" cy="27.3" r="0.6" fill="white"/><path d="M22 36Q28 40 34 36" stroke="#B5735A" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`
 
 type Client struct {
-	cfg  *config.Config
-	http *http.Client
+	cfg        *config.Config
+	httpClient *http.Client
 }
 
 func New(cfg *config.Config) *Client {
 	return &Client{
-		cfg:  cfg,
-		http: &http.Client{Timeout: 30 * time.Second},
+		cfg:        cfg,
+		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
@@ -62,7 +62,7 @@ func (c *Client) Send(subject, digestText string) error {
 	req.Header.Set("Authorization", "Bearer "+c.cfg.ResendAPIKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.http.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("enviar e-mail: %w", err)
 	}
@@ -72,7 +72,7 @@ func (c *Client) Send(subject, digestText string) error {
 		raw, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("Resend status %d: %s", resp.StatusCode, string(raw))
 	}
-
+	_, _ = io.Copy(io.Discard, resp.Body)
 	return nil
 }
 
@@ -151,7 +151,7 @@ func textToHTML(text string) string {
   <div style="margin-bottom:6px">
     <span style="font-size:38px;font-weight:800;color:#F8FAFC;letter-spacing:-2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">metria</span><span style="font-size:38px;font-weight:800;color:#6366F1;letter-spacing:-2px">.</span>
   </div>
-  <div style="font-size:11px;font-weight:700;letter-spacing:4px;color:#818CF8;text-transform:uppercase;margin-bottom:16px">CuradorIA</div>
+  <div style="font-size:11px;font-weight:700;letter-spacing:4px;color:#818CF8;text-transform:uppercase;margin-bottom:16px">Ada &amp; Alan News</div>
   <div style="width:32px;height:2px;background:#6366F1;margin:0 auto 24px;border-radius:2px"></div>
   <div style="display:inline-flex;gap:36px">
     <div style="text-align:center">
@@ -272,7 +272,7 @@ func textToHTML(text string) string {
 				if strings.HasPrefix(url, "http") {
 					fmt.Fprintf(&sb,
 						`<a href="%s" style="display:inline-block;margin-top:8px;background:#0F172A;color:#38BDF8;font-size:12px;font-weight:600;padding:6px 16px;border-radius:8px;text-decoration:none">👁 Visualizar algoritmo →</a>`,
-						url,
+						escapeURL(url),
 					)
 				}
 				continue
@@ -288,7 +288,7 @@ func textToHTML(text string) string {
 				if strings.HasPrefix(url, "http") {
 					fmt.Fprintf(&sb,
 						`<a href="%s" style="display:inline-block;margin-top:12px;font-size:13px;color:#6366F1;text-decoration:none;font-weight:600">Acessar conteúdo →</a>`,
-						url,
+						escapeURL(url),
 					)
 				}
 				continue
@@ -354,7 +354,7 @@ func textToHTML(text string) string {
   <div style="margin-bottom:6px">
     <span style="font-size:15px;font-weight:800;color:#64748B;letter-spacing:-0.5px">metria</span><span style="font-size:15px;font-weight:800;color:#6366F1">.</span>
   </div>
-  <div style="color:#94A3B8;font-size:11px;margin-bottom:12px">Gerado automaticamente por <strong style="color:#64748B">Metria CuradorIA</strong> &mdash; Ada &amp; Alan</div>
+  <div style="color:#94A3B8;font-size:11px;margin-bottom:12px">Gerado automaticamente por <strong style="color:#64748B">Ada &amp; Alan News</strong></div>
   <a href="https://github.com/rfulgencio3/go-aicurator" style="color:#64748B;text-decoration:none;font-size:11px">
     <svg width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:4px"><path fill="#64748B" d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>rfulgencio3/go-aicurator
   </a>
@@ -380,7 +380,7 @@ func renderRelatedLinks(val string) string {
 		if strings.HasPrefix(url, "http") {
 			fmt.Fprintf(&sb,
 				`<a href="%s" style="display:inline-block;background:#EEF2FF;color:#4F46E5;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-decoration:none">%s ↗</a>`,
-				url, label,
+				escapeURL(url), label,
 			)
 		}
 	}
@@ -517,6 +517,13 @@ func isVisualizeLine(line string) bool {
 	return false
 }
 
+// escapeURL escapes a URL for safe use in HTML href attributes.
+func escapeURL(u string) string {
+	u = strings.ReplaceAll(u, "&", "&amp;")
+	u = strings.ReplaceAll(u, "\"", "&quot;")
+	return u
+}
+
 // safeHTMLRaw escapa HTML sem transformar URLs em links — para blocos de código.
 func safeHTMLRaw(s string) string {
 	s = strings.ReplaceAll(s, "&", "&amp;")
@@ -550,7 +557,7 @@ func safeHTML(s string) string {
 	words := strings.Fields(s)
 	for i, w := range words {
 		if strings.HasPrefix(w, "http://") || strings.HasPrefix(w, "https://") {
-			words[i] = fmt.Sprintf(`<a href="%s" style="color:#6366F1;text-decoration:none">%s</a>`, w, w)
+			words[i] = fmt.Sprintf(`<a href="%s" style="color:#6366F1;text-decoration:none">%s</a>`, escapeURL(w), safeHTMLRaw(w))
 		} else {
 			w = strings.ReplaceAll(w, "&", "&amp;")
 			w = strings.ReplaceAll(w, "<", "&lt;")
