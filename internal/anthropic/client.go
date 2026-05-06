@@ -192,9 +192,10 @@ TOM (Alan): militante mas acolhedor — entusiasmo contrasta com o ceticismo da 
 ---
 
 TAREFA:
-Busque %d conteúdos recentes e relevantes sobre: %s.
+Selecione %d conteúdos recentes e relevantes sobre: %s.
 Formatos desejados: %s.
 %s
+Use sua ferramenta de busca web para encontrar publicações das últimas semanas. Se a busca web não estiver disponível, use seu conhecimento de treinamento mais recente para selecionar conteúdos representativos e relevantes — neste caso, priorize conteúdos reconhecidamente importantes e indique a data aproximada de cada publicação.
 
 FONTES E CRIADORES PREFERENCIAIS (priorize quando relevante):
 - Geopolítica: Clovis de Barros Filho, analistas de relações internacionais
