@@ -283,7 +283,7 @@ func textToHTML(text string) string {
 			if isVisualizeLine(clean) {
 				_, val := splitMeta(clean)
 				url := strings.TrimSpace(val)
-				if strings.HasPrefix(url, "http") {
+				if strings.HasPrefix(url, "http") && !isFakeURL(url) {
 					fmt.Fprintf(&sb,
 						`<a href="%s" style="display:inline-block;margin-top:8px;background:#0F172A;color:#38BDF8;font-size:12px;font-weight:600;padding:6px 16px;border-radius:8px;text-decoration:none">👁 Visualizar algoritmo →</a>`,
 						escapeURL(url),
@@ -299,7 +299,7 @@ func textToHTML(text string) string {
 			if isLinkLine(clean) {
 				_, val := splitMeta(clean)
 				url := strings.TrimSpace(val)
-				if strings.HasPrefix(url, "http") {
+				if strings.HasPrefix(url, "http") && !isFakeURL(url) {
 					fmt.Fprintf(&sb,
 						`<a href="%s" style="display:inline-block;margin-top:12px;font-size:13px;color:#6366F1;text-decoration:none;font-weight:600">Acessar conteúdo →</a>`,
 						escapeURL(url),
@@ -380,22 +380,30 @@ func textToHTML(text string) string {
 	return sb.String()
 }
 
+func isFakeURL(url string) bool {
+	lower := strings.ToLower(url)
+	for _, pat := range []string{"xyz", "example.com", "yourlink", "link-aqui", "url-aqui", "inserir-link", "placeholder", "link1", "link2", "link3"} {
+		if strings.Contains(lower, pat) {
+			return true
+		}
+	}
+	return !strings.Contains(url, ".")
+}
+
 func renderRelatedLinks(val string) string {
 	parts := strings.Split(val, "|")
 	var sb strings.Builder
 	sb.WriteString(`<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">`)
 	for i, p := range parts {
 		url := strings.TrimSpace(p)
-		if url == "" {
+		if url == "" || !strings.HasPrefix(url, "http") || isFakeURL(url) {
 			continue
 		}
 		label := fmt.Sprintf("Link %d", i+1)
-		if strings.HasPrefix(url, "http") {
-			fmt.Fprintf(&sb,
-				`<a href="%s" style="display:inline-block;background:#EEF2FF;color:#4F46E5;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-decoration:none">%s ↗</a>`,
-				escapeURL(url), label,
-			)
-		}
+		fmt.Fprintf(&sb,
+			`<a href="%s" style="display:inline-block;background:#EEF2FF;color:#4F46E5;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-decoration:none">%s ↗</a>`,
+			escapeURL(url), label,
+		)
 	}
 	sb.WriteString(`</div>`)
 	return sb.String()

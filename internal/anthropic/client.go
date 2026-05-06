@@ -110,7 +110,39 @@ func (c *Client) GenerateDigest() (string, error) {
 		return "", fmt.Errorf("resposta vazia da API")
 	}
 
-	return strings.Join(parts, "\n"), nil
+	return stripDisclaimer(strings.Join(parts, "\n")), nil
+}
+
+func stripDisclaimer(text string) string {
+	skipPatterns := []string{
+		"desculpe",
+		"não posso acessar",
+		"não tenho acesso",
+		"simulação do digest",
+		"i'm unable",
+		"i cannot",
+		"i am unable",
+		"as of my knowledge",
+		"my knowledge cutoff",
+		"aqui está uma simulação",
+		"com base no meu conhecimento",
+		"conhecimento atualizado até",
+	}
+	var out []string
+	for _, line := range strings.Split(text, "\n") {
+		lower := strings.ToLower(line)
+		skip := false
+		for _, pat := range skipPatterns {
+			if strings.Contains(lower, pat) {
+				skip = true
+				break
+			}
+		}
+		if !skip {
+			out = append(out, line)
+		}
+	}
+	return strings.TrimSpace(strings.Join(out, "\n"))
 }
 
 func (c *Client) buildPrompt() string {
@@ -237,9 +269,12 @@ FONTES E CRIADORES PREFERENCIAIS (priorize quando relevante):
 - Tech/Dev: Fabio Akita, Professor HOK, Alura, Codecon, Hipsters.tech, Café Debug
 - Vídeos/Podcasts: Mano Deyvin, Lucas Montano, Flow podcast (quando o convidado for relevante)
 
+REGRA ABSOLUTA DE FORMATO: Comece a resposta DIRETAMENTE com "1. [Título do primeiro item]".
+Não inclua nenhum texto antes do item 1 — nenhum aviso, disclaimer, introdução, saudação ou explicação sobre limitações de acesso à internet. Se não tiver acesso a informações recentes, gere o conteúdo baseado em conhecimento de treinamento sem mencionar essa limitação.
+
 IMPORTANTE: títulos em texto simples — sem **, *, # ou qualquer marcador markdown.
 
-Para cada item, use EXATAMENTE este formato (sem omitir nenhum campo):
+Para cada item, use EXATAMENTE este formato (sem omitir nenhum campo obrigatório):
 
 N. Título do conteúdo
 Tipo: artigo | paper | vídeo | podcast | ferramenta | outro
@@ -248,9 +283,10 @@ Ada diz: 2-4 frases em português com a opinião pessoal da Ada
 Ada says: 2-4 frases em inglês — mesma opinião, não tradução literal
 Alan diz: 2-4 frases em português com a opinião pessoal do Alan
 Alan says: 2-4 frases em inglês — mesma opinião, não tradução literal
-Link: URL principal
-Links relacionados: URL1 | URL2 | URL3
+Link: URL real e verificada da publicação. Se não tiver certeza da URL exata, omita este campo completamente.
+Links relacionados: URLs reais adicionais separadas por |. Se não tiver URLs verificadas, omita este campo completamente.
 Nível: Iniciante | Intermediário | Avançado
+NUNCA invente ou adivinhe URLs. Um campo omitido é melhor que um link quebrado.
 
 Para itens cujo Tipo seja algoritmo ou estrutura de dados, adicione obrigatoriamente:
 Exemplo: trace passo a passo com entrada pequena (ex: ordenar [5,3,8,1,9,2] → Passo 1: ..., Passo 2: ..., Resultado: [1,2,3,5,8,9])
