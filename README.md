@@ -88,7 +88,7 @@ Para usar Anthropic, substitua `OPENAI_API_KEY` por `ANTHROPIC_API_KEY` e altere
 | `RESEND_API_KEY` | Sim (se resend) | — |
 | `SENDGRID_API_KEY` | Sim (se sendgrid) | — |
 | `EMAIL_FROM` | Sim | — |
-| `EMAIL_FROM_NAME` | Não | `Ada & Alan News` |
+| `EMAIL_FROM_NAME` | Não | `Metria CuradorIA` |
 | `EMAIL_TO` | Sim | — (vírgula para múltiplos) |
 | `TOPICS` | Não | 10 tópicos padrão (ver `.env.example`) |
 | `FORMATS` | Não | Artigos, Papers, Vídeos |

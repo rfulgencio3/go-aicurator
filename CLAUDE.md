@@ -28,7 +28,7 @@ GitHub Actions (cron) → cmd/main.go → config.Load() → [openai|anthropic].G
 |---|---|
 | Linguagem | Go 1.22+ |
 | Módulo | `github.com/seu-usuario/go-aicurator` |
-| Provider de IA | OpenAI (padrão, `gpt-4o` + `web_search_preview`) ou Anthropic (`claude-sonnet-4-20250514` + `web_search_20250305`) |
+| Provider de IA | OpenAI (padrão, `gpt-4o`, Chat Completions API — sem web search) ou Anthropic (`claude-sonnet-4-20250514` + `web_search_20250305`) |
 | Provider de e-mail | Resend (padrão) ou SendGrid |
 | Agendamento | GitHub Actions (`.github/workflows/digest.yml`) |
 | Dependências externas | Nenhuma — apenas stdlib Go |
@@ -115,7 +115,7 @@ Todas documentadas em `.env.example`. **Nunca** commite valores reais.
 | `RESEND_API_KEY` | Sim (se `EMAIL_PROVIDER=resend`) | — |
 | `SENDGRID_API_KEY` | Sim (se `EMAIL_PROVIDER=sendgrid`) | — |
 | `EMAIL_FROM` | Sim | — |
-| `EMAIL_FROM_NAME` | Não | `Ada & Alan News` |
+| `EMAIL_FROM_NAME` | Não | `Metria CuradorIA` |
 | `EMAIL_TO` | Sim | — (vírgula para múltiplos) |
 | `TOPICS` | Não | 10 tópicos (ver abaixo) |
 | `FORMATS` | Não | Artigos, Papers, Vídeos |
@@ -168,17 +168,21 @@ go run .\cmd\main.go
 O prompt é construído em `buildPrompt()` — presente em `internal/openai/client.go` e `internal/anthropic/client.go`. **Ambos devem ser mantidos em sincronia.**
 
 ### Ada
-- Humor mordaz britânico, ceticismo técnico, anti-hype
-- Ama Go e .NET; desconfia do ecossistema JS; não reconhece PHP
-- Cita Dijkstra, Shannon, Turing, Knuth, von Neumann
-- Liberal: pro-privacidade, pro-open source
+- Voz: frases curtas, sem exclamações, prefere ponto-e-vírgula
+- Frases características: "Dijkstra já havia resolvido isso em [ano]. EWD[n].", "Não reconheço esse nome." (PHP)
+- Anti-hype: detecta press release disfarçado com precisão cirúrgica
+- Referências: Dijkstra (EWDs), Shannon, Turing, Knuth (TAOCP), von Neumann, Ada Lovelace
+- Elogio máximo: "Isto é aceitável."
 
 ### Alan
-- Entusiasta militante, matemático de coração, centro-esquerda
-- Ama JavaScript (Node, React, vanilla JS) como ferramenta de democratização
-- Pro-minorias: lembra que Turing foi perseguido pelo Estado
-- Cita Turing, Grace Hopper, Katherine Johnson, Dorothy Vaughan
-- Pragmático com PHP; discorda da Ada sobre JS explicitamente
+- Voz: entusiástico, usa exclamações, conecta tudo à matemática e à história
+- Frases características: "Como Turing demonstrou com a máquina universal...", "Isso é o que democratização parece na prática!"
+- Pro-minorias: celebra Grace Hopper, Katherine Johnson, Dorothy Vaughan, Mary Jackson
+- Ama JavaScript militantemente; defende PHP pragmaticamente; discorda da Ada explicitamente sobre ambos
+
+### Tensão Ada × Alan (use nas opiniões)
+- JavaScript, PHP e IA Generativa: pontos de conflito
+- Rust, open source com substância, respeito por Turing: raros pontos de concordância
 
 ### Formato por item
 
@@ -190,8 +194,8 @@ Ada diz: 2-4 frases em português
 Ada says: 2-4 frases em inglês
 Alan diz: 2-4 frases em português
 Alan says: 2-4 frases em inglês
-Link: URL principal
-Links relacionados: URL1 | URL2 | URL3
+Link: URL real e verificada (omitir se não tiver certeza — nunca inventar)
+Links relacionados: URLs reais separadas por | (omitir se não verificadas)
 Nível: Iniciante | Intermediário | Avançado
 
 # Apenas para itens de algoritmo/estrutura de dados:
@@ -199,6 +203,9 @@ Exemplo: trace passo a passo com entrada pequena
 Complexidade: tempo O(?) | espaço O(?)
 Visualizar: URL de ferramenta visual (VisuAlgo, Algorithm Visualizer, etc.)
 ```
+
+### REGRA ABSOLUTA DE FORMATO
+A resposta deve começar diretamente com "1. [Título do primeiro item]". Nenhum disclaimer, aviso ou texto introdutório antes do item 1.
 
 ### Seções fixas ao final
 
@@ -241,8 +248,8 @@ A função `textToHTML()` fica em cada cliente de e-mail e deve ser mantida **em
 | `Complexidade:` | Badge dark com texto cyan (`⚡ O(n log n)`) |
 | `Visualizar:` | Botão dark `👁 Visualizar algoritmo →` |
 | `Nível:` | Badge colorido (verde/roxo/vermelho) |
-| `Link:` | Botão `Acessar conteúdo →` |
-| `Links relacionados:` | Chips pill-shaped por URL |
+| `Link:` | Botão `Acessar conteúdo →` (suprimido se URL falsa via `isFakeURL()`) |
+| `Links relacionados:` | Chips pill-shaped por URL (chips falsos suprimidos via `isFakeURL()`) |
 | Ada's Pick | Bloco roxo `⭐` |
 | Alan's Pick | Bloco teal `🏆` |
 | Fatos Interessantes | Bloco verde `💡` |
@@ -293,5 +300,7 @@ Apenas atualize `.env` ou o padrão em `config.go` — nenhuma mudança de códi
 - Sugerir `panic` como tratamento de erro em produção.
 - Alterar o `.gitignore` de forma que exponha secrets.
 - Desincronizar `buildPrompt()` entre `openai/client.go` e `anthropic/client.go`.
-- Desincronizar `textToHTML()` e helpers entre `resend/client.go` e `sendgrid/client.go`.
+- Desincronizar `textToHTML()`, `isFakeURL()`, `stripDisclaimer()` e helpers entre os clientes de e-mail e IA.
+- Remover `stripDisclaimer()` de um cliente sem remover do outro.
+- Remover `isFakeURL()` de `resend/client.go` sem remover de `sendgrid/client.go`.
 - Commitar sem atualizar `README.md` e `CLAUDE.md` quando houver mudanças que afetem comportamento, configuração ou estrutura do projeto.
