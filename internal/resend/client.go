@@ -147,28 +147,34 @@ func textToHTML(text string) string {
 <body style="margin:0;padding:0;background:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
 <div style="max-width:640px;margin:0 auto">
 
-<div style="background:linear-gradient(150deg,#0F172A 0%,#1E3A5F 100%);padding:40px 32px 32px;border-radius:0 0 24px 24px;text-align:center">
-  <div style="margin-bottom:6px">
+<div style="background:linear-gradient(150deg,#0F172A 0%,#1E3A5F 100%);padding:40px 32px 36px;border-radius:0 0 24px 24px;text-align:center">
+  <div style="margin-bottom:4px">
     <span style="font-size:38px;font-weight:800;color:#F8FAFC;letter-spacing:-2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">metria</span><span style="font-size:38px;font-weight:800;color:#6366F1;letter-spacing:-2px">.</span>
   </div>
-  <div style="font-size:11px;font-weight:700;letter-spacing:4px;color:#818CF8;text-transform:uppercase;margin-bottom:16px">Ada &amp; Alan News</div>
-  <div style="width:32px;height:2px;background:#6366F1;margin:0 auto 24px;border-radius:2px"></div>
-  <div style="display:inline-flex;gap:36px">
-    <div style="text-align:center">
+  <div style="font-size:10px;font-weight:700;letter-spacing:4px;color:#818CF8;text-transform:uppercase;margin-bottom:24px">Ada &amp; Alan News</div>
+  <table role="presentation" style="margin:0 auto;border-collapse:collapse">
+  <tr>
+    <td style="text-align:center;padding:0 20px;vertical-align:top">
 `)
 	sb.WriteString(adaAvatarSVG)
 	sb.WriteString(`
-      <div style="font-size:11px;font-weight:700;color:#A5B4FC;margin-top:8px;letter-spacing:2px;text-transform:uppercase">Ada</div>
-      <div style="font-size:9px;color:#64748B;margin-top:2px">Ada Lovelace</div>
-    </div>
-    <div style="text-align:center">
+      <div style="font-size:12px;font-weight:700;color:#A5B4FC;margin-top:10px;letter-spacing:2px;text-transform:uppercase">Ada</div>
+      <div style="font-size:9px;color:#818CF8;margin-top:2px">Ada Lovelace</div>
+      <div style="font-size:9px;color:#475569;margin-top:4px;font-style:italic">Ceticismo técnico</div>
+    </td>
+    <td style="vertical-align:middle;padding:0 10px">
+      <div style="color:#334155;font-size:11px;font-weight:800;letter-spacing:2px">VS</div>
+    </td>
+    <td style="text-align:center;padding:0 20px;vertical-align:top">
 `)
 	sb.WriteString(alanAvatarSVG)
 	sb.WriteString(`
-      <div style="font-size:11px;font-weight:700;color:#5EEAD4;margin-top:8px;letter-spacing:2px;text-transform:uppercase">Alan</div>
-      <div style="font-size:9px;color:#64748B;margin-top:2px">Alan Turing</div>
-    </div>
-  </div>
+      <div style="font-size:12px;font-weight:700;color:#5EEAD4;margin-top:10px;letter-spacing:2px;text-transform:uppercase">Alan</div>
+      <div style="font-size:9px;color:#99F6E4;margin-top:2px">Alan Turing</div>
+      <div style="font-size:9px;color:#475569;margin-top:4px;font-style:italic">Entusiasmo militante</div>
+    </td>
+  </tr>
+  </table>
 </div>
 
 <div style="padding:24px 16px">
@@ -198,11 +204,7 @@ func textToHTML(text string) string {
 		line := strings.TrimRight(raw, " \t")
 		clean := stripBullet(line)
 
-		if isNumberedItem(line) {
-			if inSection {
-				sb.WriteString("</div></div>\n\n")
-				inSection = false
-			}
+		if !inSection && isNumberedItem(line) {
 			if inCard {
 				sb.WriteString("</div></div>\n\n")
 			}
@@ -326,10 +328,20 @@ func textToHTML(text string) string {
 		}
 
 		if inSection {
-			fmt.Fprintf(&sb,
-				`<p style="margin:0 0 8px;color:%s;font-size:14px;line-height:1.75">%s</p>`,
-				curStyle.textColor, safeHTML(line),
-			)
+			if idx := strings.Index(clean, " | "); idx >= 0 {
+				pt := strings.TrimSpace(clean[:idx])
+				en := strings.TrimSpace(clean[idx+3:])
+				fmt.Fprintf(&sb,
+					`<div style="margin-bottom:12px"><div style="font-size:13px;color:%s;line-height:1.75;margin-bottom:4px"><span style="font-size:11px;margin-right:6px">🇧🇷</span>%s</div><div style="font-size:13px;color:%s;line-height:1.75;opacity:0.9"><span style="font-size:11px;margin-right:6px">🇺🇸</span>%s</div></div>`,
+					curStyle.textColor, safeHTML(pt),
+					curStyle.textColor, safeHTML(en),
+				)
+			} else {
+				fmt.Fprintf(&sb,
+					`<p style="margin:0 0 8px;color:%s;font-size:14px;line-height:1.75">%s</p>`,
+					curStyle.textColor, safeHTML(clean),
+				)
+			}
 			continue
 		}
 
