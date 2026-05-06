@@ -28,6 +28,13 @@ type Config struct {
 	Formats []string
 	ItemQty int
 	Lang    string // "pt", "en", "bilingual"
+
+	// Crawler RSS
+	CrawlEnabled     bool
+	RSSFeeds         []string
+	CrawlMaxAgeDays  int
+	CrawlMaxItems    int
+	ArticleCacheFile string
 }
 
 func Load() (*Config, error) {
@@ -89,6 +96,27 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	c.Lang = lang
+
+	c.CrawlEnabled = envOr("CRAWL_ENABLED", "true") != "false"
+	feedsRaw := os.Getenv("RSS_FEEDS")
+	for _, f := range strings.Split(feedsRaw, ",") {
+		if v := strings.TrimSpace(f); v != "" {
+			c.RSSFeeds = append(c.RSSFeeds, v)
+		}
+	}
+	maxAge, err := strconv.Atoi(envOr("CRAWL_MAX_AGE_DAYS", "7"))
+	if err != nil || maxAge < 1 {
+		return nil, fmt.Errorf("CRAWL_MAX_AGE_DAYS inválido")
+	}
+	c.CrawlMaxAgeDays = maxAge
+
+	maxItems, err := strconv.Atoi(envOr("CRAWL_MAX_ITEMS", "60"))
+	if err != nil || maxItems < 1 {
+		return nil, fmt.Errorf("CRAWL_MAX_ITEMS inválido")
+	}
+	c.CrawlMaxItems = maxItems
+
+	c.ArticleCacheFile = envOr("ARTICLE_CACHE", "articles.json")
 
 	return c, nil
 }

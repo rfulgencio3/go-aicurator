@@ -56,8 +56,8 @@ type responseBody struct {
 }
 
 // GenerateDigest chama a API e retorna o texto do digest pronto.
-func (c *Client) GenerateDigest() (string, error) {
-	prompt := c.buildPrompt()
+func (c *Client) GenerateDigest(articlesCtx string) (string, error) {
+	prompt := c.buildPrompt(articlesCtx)
 
 	body := requestBody{
 		Model:     c.cfg.AnthropicModel,
@@ -152,7 +152,7 @@ func stripDisclaimer(text string) string {
 	return strings.TrimSpace(strings.Join(out, "\n"))
 }
 
-func (c *Client) buildPrompt() string {
+func (c *Client) buildPrompt(articlesCtx string) string {
 	cfg := c.cfg
 
 	var langInstr string
@@ -267,7 +267,7 @@ TAREFA:
 Selecione %d conteúdos recentes e relevantes sobre: %s.
 Formatos desejados: %s.
 %s
-Use sua ferramenta de busca web para encontrar publicações das últimas semanas. Se a busca web não estiver disponível, use seu conhecimento de treinamento mais recente para selecionar conteúdos representativos e relevantes — neste caso, priorize conteúdos reconhecidamente importantes e indique a data aproximada de cada publicação.
+%s
 
 FONTES E CRIADORES PREFERENCIAIS (priorize quando relevante):
 - Geopolítica: Clovis de Barros Filho, analistas de relações internacionais
@@ -345,8 +345,19 @@ Responda APENAS com o texto do digest, sem blocos de código ou markdown extra.`
 		strings.Join(cfg.Topics, ", "),
 		strings.Join(cfg.Formats, ", "),
 		langInstr,
+		buildSourcesInstruction(articlesCtx),
 		today,
 	)
+}
+
+func buildSourcesInstruction(articlesCtx string) string {
+	if articlesCtx == "" {
+		return "Use seu conhecimento de treinamento mais recente para selecionar conteúdos representativos e relevantes. Priorize conteúdos reconhecidamente importantes e indique a data aproximada de cada publicação."
+	}
+	return fmt.Sprintf(`ARTIGOS REAIS COLETADOS ESTA SEMANA — use como base obrigatória da curadoria:
+
+%s
+Selecione os itens do digest A PARTIR DESTES ARTIGOS REAIS. Todos os itens devem referenciar artigos da lista acima. Complemente com contexto de treinamento apenas na análise de Ada e Alan — nunca para inventar artigos.`, articlesCtx)
 }
 
 func datePT(t time.Time) string {

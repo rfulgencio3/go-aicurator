@@ -7,6 +7,7 @@ import (
 
 	"github.com/seu-usuario/go-aicurator/internal/anthropic"
 	"github.com/seu-usuario/go-aicurator/internal/config"
+	"github.com/seu-usuario/go-aicurator/internal/crawler"
 	"github.com/seu-usuario/go-aicurator/internal/openai"
 	"github.com/seu-usuario/go-aicurator/internal/resend"
 	"github.com/seu-usuario/go-aicurator/internal/sendgrid"
@@ -20,8 +21,22 @@ func main() {
 		log.Fatalf("configuração inválida: %v", err)
 	}
 
+	// ── Crawler RSS ──────────────────────────────────────────────────────────
+	var articlesCtx string
+	if cfg.CrawlEnabled {
+		old := crawler.LoadCache(cfg.ArticleCacheFile)
+		fresh := crawler.Fetch(cfg)
+		all := crawler.Merge(old, fresh)
+		if err := crawler.SaveCache(cfg.ArticleCacheFile, all); err != nil {
+			log.Printf("crawler: aviso — não foi possível salvar cache: %v", err)
+		}
+		articlesCtx = crawler.FormatContext(all)
+		log.Printf("Crawler: %d artigos no pool (cache: %s)", len(all), cfg.ArticleCacheFile)
+	}
+
+	// ── Geração do digest ────────────────────────────────────────────────────
 	type digester interface {
-		GenerateDigest() (string, error)
+		GenerateDigest(articlesCtx string) (string, error)
 	}
 	var ai digester
 	switch cfg.AIProvider {
@@ -34,7 +49,7 @@ func main() {
 	}
 
 	log.Printf("Gerando digest via %s...", cfg.AIProvider)
-	digest, err := ai.GenerateDigest()
+	digest, err := ai.GenerateDigest(articlesCtx)
 	if err != nil {
 		log.Fatalf("erro ao gerar digest: %v", err)
 	}
