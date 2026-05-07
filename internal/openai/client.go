@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/seu-usuario/go-aicurator/internal/ai"
 	"github.com/seu-usuario/go-aicurator/internal/config"
 )
 
@@ -92,46 +93,7 @@ func (c *Client) GenerateDigest(articlesCtx string) (string, error) {
 		return "", fmt.Errorf("resposta vazia da API")
 	}
 
-	return stripDisclaimer(result.Choices[0].Message.Content), nil
-}
-
-func stripDisclaimer(text string) string {
-	skipPatterns := []string{
-		"desculpe",
-		"não posso acessar",
-		"não tenho acesso",
-		"simulação do digest",
-		"i'm unable",
-		"i'm sorry",
-		"i cannot",
-		"i am unable",
-		"as of my knowledge",
-		"my knowledge cutoff",
-		"aqui está uma simulação",
-		"com base no meu conhecimento",
-		"conhecimento atualizado até",
-		"however, i can help",
-		"based on available information",
-		"i can help generate",
-		"here is a sample digest",
-		"aqui está um exemplo",
-		"aqui está uma lista",
-	}
-	var out []string
-	for _, line := range strings.Split(text, "\n") {
-		lower := strings.ToLower(line)
-		skip := false
-		for _, pat := range skipPatterns {
-			if strings.Contains(lower, pat) {
-				skip = true
-				break
-			}
-		}
-		if !skip {
-			out = append(out, line)
-		}
-	}
-	return strings.TrimSpace(strings.Join(out, "\n"))
+	return ai.StripDisclaimer(result.Choices[0].Message.Content), nil
 }
 
 func buildPrompt(cfg *config.Config, articlesCtx string) string {
@@ -144,7 +106,7 @@ func buildPrompt(cfg *config.Config, articlesCtx string) string {
 	default:
 		langInstr = "Escreva o digest inteiramente em português."
 	}
-	today := datePT(time.Now())
+	today := ai.DatePT(time.Now())
 
 	return fmt.Sprintf(`Este digest é narrado por dois co-curadores com perspectivas deliberadamente opostas. Eles discordam com frequência — e isso é o ponto.
 
@@ -329,25 +291,8 @@ Responda APENAS com o texto do digest, sem blocos de código ou markdown extra.`
 		strings.Join(cfg.Topics, ", "),
 		strings.Join(cfg.Formats, ", "),
 		langInstr,
-		buildSourcesInstruction(articlesCtx),
+		ai.BuildSourcesInstruction(articlesCtx),
 		today,
 	)
 }
 
-func buildSourcesInstruction(articlesCtx string) string {
-	if articlesCtx == "" {
-		return "Use seu conhecimento de treinamento mais recente para selecionar conteúdos representativos e relevantes. Priorize conteúdos reconhecidamente importantes e indique a data aproximada de cada publicação."
-	}
-	return fmt.Sprintf(`ARTIGOS REAIS COLETADOS ESTA SEMANA — use como base obrigatória da curadoria:
-
-%s
-Selecione os itens do digest A PARTIR DESTES ARTIGOS REAIS. Todos os itens devem referenciar artigos da lista acima. Complemente com contexto de treinamento apenas na análise de Ada e Alan — nunca para inventar artigos.`, articlesCtx)
-}
-
-func datePT(t time.Time) string {
-	months := [...]string{"", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-		"julho", "agosto", "setembro", "outubro", "novembro", "dezembro"}
-	days := [...]string{"domingo", "segunda-feira", "terça-feira", "quarta-feira",
-		"quinta-feira", "sexta-feira", "sábado"}
-	return fmt.Sprintf("%s, %d de %s de %d", days[t.Weekday()], t.Day(), months[t.Month()], t.Year())
-}

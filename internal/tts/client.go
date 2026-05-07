@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/seu-usuario/go-aicurator/internal/config"
+	"github.com/seu-usuario/go-aicurator/internal/email"
 )
 
 const ttsURL = "https://api.openai.com/v1/audio/speech"
@@ -59,10 +60,7 @@ func ParseScript(digest, narratorVoice, adaVoice, alanVoice string, itemLimit in
 		}
 
 		// Stop at special sections that don't belong in the podcast narrative.
-		lower := strings.ToLower(line)
-		if strings.Contains(lower, "ada's pick") || strings.Contains(lower, "alan's pick") ||
-			strings.Contains(lower, "fatos interessantes") || strings.Contains(lower, "hoje na história") ||
-			strings.Contains(lower, "livro da semana") || strings.Contains(lower, "canal/vídeo") {
+		if email.IsSectionHeader(strings.ToLower(line)) {
 			break
 		}
 

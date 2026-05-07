@@ -89,7 +89,8 @@ func (c *Client) createRelease(tag, name string) (*releaseResponse, error) {
 
 func (c *Client) uploadAsset(rel *releaseResponse, filename string, data []byte) (string, error) {
 	// upload_url looks like "https://uploads.github.com/repos/owner/repo/releases/123/assets{?name,label}"
-	uploadURL := strings.Split(rel.UploadURL, "{")[0] + "?name=" + filename
+	base, _, _ := strings.Cut(rel.UploadURL, "{")
+	uploadURL := base + "?name=" + filename
 
 	req, err := http.NewRequest(http.MethodPost, uploadURL, bytes.NewReader(data))
 	if err != nil {
