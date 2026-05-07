@@ -147,7 +147,7 @@ func TextToHTML(text string) string {
 			continue
 		}
 
-		// Linha de podcast — renderiza botão de destaque antes das seções.
+		// Linha de podcast — renderiza player de áudio + botão de fallback.
 		if isPodcastLine(clean) {
 			if inCard {
 				sb.WriteString(searchFallback(cardTitle, cardHasLink))
@@ -161,9 +161,18 @@ func TextToHTML(text string) string {
 			_, val := splitMeta(clean)
 			url := strings.TrimSpace(val)
 			if strings.HasPrefix(url, "http") && !isFakeURL(url) {
+				safeURL := escapeURL(url)
+				// <audio> funciona em Apple Mail, Thunderbird, etc.
+				// Gmail remove a tag mas mostra o botão como fallback.
 				fmt.Fprintf(&sb,
-					`<div style="text-align:center;margin:28px 0 12px"><a href="%s" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#7C3AED 0%%,#4F46E5 100%%);color:white;font-size:14px;font-weight:700;padding:14px 30px;border-radius:32px;text-decoration:none;box-shadow:0 4px 14px rgba(99,102,241,.35)">🎙 Ouça o podcast desta edição →</a></div>`,
-					escapeURL(url),
+					`<div style="background:linear-gradient(135deg,#1E1B4B 0%%,#312E81 100%%);border-radius:16px;padding:24px 28px;margin:20px 0;text-align:center">
+  <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:#A5B4FC;text-transform:uppercase;margin-bottom:14px">🎙 Podcast desta edição</div>
+  <audio controls style="width:100%%;max-width:480px;margin-bottom:16px;border-radius:8px;display:block;margin-left:auto;margin-right:auto">
+    <source src="%s" type="audio/mpeg">
+  </audio>
+  <a href="%s" style="display:inline-flex;align-items:center;gap:8px;background:#6366F1;color:white;font-size:13px;font-weight:600;padding:10px 22px;border-radius:24px;text-decoration:none">⬇ Baixar MP3</a>
+</div>`,
+					safeURL, safeURL,
 				)
 			}
 			continue

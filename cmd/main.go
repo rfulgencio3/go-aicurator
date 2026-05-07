@@ -80,7 +80,7 @@ func main() {
 					log.Printf("TTS: aviso — falha no upload do podcast: %v", err)
 				} else {
 					log.Printf("TTS: podcast publicado em %s", podcastURL)
-					digest += "\nPODCAST: " + podcastURL
+					digest = "PODCAST: " + podcastURL + "\n" + digest
 				}
 			}
 		}
