@@ -118,27 +118,51 @@ go-aicurator/
 ├── cmd/
 │   └── main.go                 # Entrypoint
 ├── internal/
+│   ├── ai/
+│   │   └── shared.go           # Utilitários compartilhados de IA (StripDisclaimer, DatePT, etc.)
 │   ├── anthropic/
 │   │   └── client.go           # Provider IA: Anthropic + prompt Ada & Alan
 │   ├── config/
 │   │   └── config.go           # Variáveis de ambiente
 │   ├── crawler/
 │   │   └── client.go           # Crawler RSS/Atom — coleta artigos reais
+│   ├── email/
+│   │   ├── renderer.go         # Renderização HTML do e-mail (TextToHTML e helpers)
+│   │   └── sections.go         # Constantes de seção + IsSectionHeader()
 │   ├── ghrelease/
 │   │   └── client.go           # Upload de podcast MP3 para GitHub Releases
-│   ├── tts/
-│   │   └── client.go           # Geração de áudio via OpenAI TTS
 │   ├── openai/
 │   │   └── client.go           # Provider IA: OpenAI + prompt Ada & Alan
 │   ├── resend/
-│   │   └── client.go           # Provider e-mail: Resend + renderização HTML
-│   └── sendgrid/
-│       └── client.go           # Provider e-mail: SendGrid + renderização HTML
+│   │   └── client.go           # Provider e-mail: Resend
+│   ├── sendgrid/
+│   │   └── client.go           # Provider e-mail: SendGrid
+│   └── tts/
+│       └── client.go           # Geração de áudio via OpenAI TTS
 ├── .env.example
 ├── CLAUDE.md
 ├── Makefile
 └── go.mod
 ```
+
+## Podcast (áudio opcional)
+
+Quando `TTS_ENABLED=true`, o agente gera um episódio de podcast após cada digest:
+
+1. Um narrador (`onyx`) lê cada notícia com o resumo
+2. Ada (`nova`, voz feminina) comenta
+3. Alan (`echo`, voz masculina) comenta
+4. O MP3 resultante é publicado como asset de uma GitHub Release
+5. O email inclui um botão "Ouvir Podcast" com o link direto
+
+**Para habilitar no GitHub Actions:**
+1. `Settings → Secrets and variables → Actions → Variables`
+2. Criar variável: `TTS_ENABLED = true`
+3. `OPENAI_API_KEY` deve estar configurado (necessário para TTS mesmo se usar Anthropic como AI provider)
+
+**Para testar localmente**, defina `TTS_ENABLED=true` e `TTS_OUTPUT_FILE=podcast.mp3` — o MP3 será salvo localmente (sem upload ao GitHub Releases, que requer `GITHUB_TOKEN` + `GITHUB_REPOSITORY`).
+
+---
 
 ## Makefile
 

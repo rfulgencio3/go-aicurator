@@ -59,20 +59,25 @@ go-aicurator/
 ├── cmd/
 │   └── main.go                  # Entrypoint — orquestra os pacotes internos
 ├── internal/
+│   ├── ai/
+│   │   └── shared.go            # Utilitários compartilhados: StripDisclaimer, DatePT, BuildSourcesInstruction
 │   ├── anthropic/
 │   │   └── client.go            # Provider IA Anthropic + prompt Ada & Alan
 │   ├── config/
 │   │   └── config.go            # Carrega e valida variáveis de ambiente
 │   ├── crawler/
 │   │   └── client.go            # Crawler RSS/Atom — coleta artigos reais (stdlib)
+│   ├── email/
+│   │   ├── renderer.go          # Renderização HTML compartilhada: TextToHTML() e todos os helpers
+│   │   └── sections.go          # Constantes de seção + IsSectionHeader() — usadas por renderer e TTS
 │   ├── ghrelease/
 │   │   └── client.go            # Upload do podcast MP3 para GitHub Releases
 │   ├── openai/
 │   │   └── client.go            # Provider IA OpenAI + prompt Ada & Alan
 │   ├── resend/
-│   │   └── client.go            # Provider e-mail Resend + renderização HTML
+│   │   └── client.go            # Provider e-mail Resend (HTTP + Send())
 │   ├── sendgrid/
-│   │   └── client.go            # Provider e-mail SendGrid + renderização HTML
+│   │   └── client.go            # Provider e-mail SendGrid (HTTP + Send())
 │   └── tts/
 │       └── client.go            # Geração de áudio MP3 via OpenAI TTS
 ├── .env.example
@@ -125,7 +130,7 @@ Todas documentadas em `.env.example`. **Nunca** commite valores reais.
 | Variável | Obrigatória | Padrão |
 |---|---|---|
 | `AI_PROVIDER` | Não | `openai` |
-| `OPENAI_API_KEY` | Sim (se `AI_PROVIDER=openai`) | — |
+| `OPENAI_API_KEY` | Sim (se `AI_PROVIDER=openai` ou `TTS_ENABLED=true`) | — |
 | `OPENAI_MODEL` | Não | `gpt-4o` |
 | `ANTHROPIC_API_KEY` | Sim (se `AI_PROVIDER=anthropic`) | — |
 | `ANTHROPIC_MODEL` | Não | `claude-sonnet-4-20250514` |
@@ -145,6 +150,15 @@ Todas documentadas em `.env.example`. **Nunca** commite valores reais.
 | `CRAWL_MAX_AGE_DAYS` | Não | `7` |
 | `CRAWL_MAX_ITEMS` | Não | `60` |
 | `ARTICLE_CACHE` | Não | `articles.json` |
+| `TTS_ENABLED` | Não | `false` |
+| `TTS_MODEL` | Não | `tts-1` |
+| `TTS_NARRATOR_VOICE` | Não | `onyx` |
+| `TTS_ADA_VOICE` | Não | `nova` |
+| `TTS_ALAN_VOICE` | Não | `echo` |
+| `TTS_ITEM_LIMIT` | Não | `5` (0 = sem limite) |
+| `TTS_OUTPUT_FILE` | Não | `podcast.mp3` |
+| `GITHUB_TOKEN` | Não (auto no Actions) | — |
+| `GITHUB_REPOSITORY` | Não (auto no Actions) | — |
 
 **Tópicos padrão (TOPICS):**
 Estruturas de Dados e Algoritmos, Inteligência Artificial e Machine Learning, LLMs e Modelos de Linguagem, Astronomia e Exploração Espacial, Neurociência e Comportamento Humano, Estoicismo e Filosofia Prática, Desenvolvimento Pessoal e Performance, Geopolítica e Relações Internacionais, Tempo e Clima, Tecnologia e Startups
@@ -212,7 +226,7 @@ O prompt é construído em `buildPrompt()` — presente em `internal/openai/clie
 ```
 N. Título do conteúdo
 Tipo: artigo | paper | vídeo | podcast | ferramenta | outro
-Resumo: duas frases técnicas e objetivas
+Resumo: três a quatro frases técnicas e objetivas — o que é, como funciona, por que é relevante agora e qual o impacto prático esperado
 Ada diz: 2-4 frases em português
 Ada says: 2-4 frases em inglês
 Alan diz: 2-4 frases em português
@@ -257,7 +271,7 @@ A resposta deve começar diretamente com "1. [Título do primeiro item]". Nenhum
 
 ## Renderização HTML do e-mail
 
-A função `textToHTML()` fica em cada cliente de e-mail e deve ser mantida **em sincronia** entre `resend/client.go` e `sendgrid/client.go`.
+A função `TextToHTML()` (exportada) vive em `internal/email/renderer.go`. Ambos `resend/client.go` e `sendgrid/client.go` chamam `email.TextToHTML(digestText)` — **não há mais lógica de renderização duplicada nos providers de e-mail.**
 
 ### Elementos detectados e renderizados
 
@@ -304,16 +318,16 @@ Linhas com ` | ` dentro de qualquer seção (Ada's Pick, Alan's Pick, Fatos, Hoj
 1. Crie `internal/<provider>/client.go` com método `Send(subject, body string) error`.
 2. Adicione as variáveis em `internal/config/config.go` no switch de `EMAIL_PROVIDER`.
 3. Instancie no `cmd/main.go` no switch da interface `mailer`.
-4. Implemente `textToHTML()` com o mesmo comportamento de `resend/client.go`.
+4. Chame `email.TextToHTML(digestText)` para a renderização HTML — **não reimplemente**.
 
 ### Nova seção no digest
-1. Adicione a instrução no prompt (ambos os providers).
-2. Adicione entrada em `sectionStyles` e caso em `detectSection` (ambos os clientes de e-mail).
+1. Adicione a instrução no prompt (ambos os providers de IA).
+2. Adicione o header da seção ao slice `SectionHeaders` em `internal/email/sections.go`.
+3. Adicione entrada em `sectionStyles` e caso em `detectSection` em `internal/email/renderer.go`.
 
 ### Novo campo por item
-1. Adicione keyword slice (ex: `var fooKeywords`), funções `isFooLine` e renderização no loop de cards.
-2. Replique em ambos os clientes de e-mail.
-3. Adicione instrução no prompt (ambos os providers).
+1. Em `internal/email/renderer.go`: adicione keyword slice (ex: `var fooKeywords`), funções `isFooLine` e renderização no loop de cards.
+2. Adicione instrução no prompt (ambos os providers de IA).
 
 ### Novo tópico ou formato
 Apenas atualize `.env` ou o padrão em `config.go` — nenhuma mudança de código necessária.
@@ -329,10 +343,9 @@ Apenas atualize `.env` ou o padrão em `config.go` — nenhuma mudança de códi
 - Sugerir `panic` como tratamento de erro em produção.
 - Alterar o `.gitignore` de forma que exponha secrets.
 - Desincronizar `buildPrompt()` entre `openai/client.go` e `anthropic/client.go`.
-- Desincronizar `textToHTML()`, `isFakeURL()`, `stripDisclaimer()` e helpers entre os clientes de e-mail e IA.
-- Remover `stripDisclaimer()` de um cliente sem remover do outro.
-- Remover `isFakeURL()` de `resend/client.go` sem remover de `sendgrid/client.go`.
-- Desincronizar `isSectionMetaLine()` e `sectionMetaKeywords` entre `resend/client.go` e `sendgrid/client.go`.
 - Alterar a assinatura de `GenerateDigest` em um provider de IA sem replicar no outro.
+- Duplicar lógica de renderização HTML em `resend/client.go` ou `sendgrid/client.go` — toda renderização pertence a `internal/email/renderer.go`.
+- Duplicar `StripDisclaimer`, `DatePT` ou `BuildSourcesInstruction` em providers de IA — pertencem a `internal/ai/shared.go`.
+- Adicionar stop-phrases de seção em `tts/client.go` hardcoded — use `email.IsSectionHeader()` de `internal/email/sections.go`.
 - Commitar `articles.json` — ele está no `.gitignore` e deve ser persistido apenas via GitHub Actions Cache.
 - Commitar sem atualizar `README.md` e `CLAUDE.md` quando houver mudanças que afetem comportamento, configuração ou estrutura do projeto.
