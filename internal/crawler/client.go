@@ -164,11 +164,22 @@ func normalizeXML(raw []byte) []byte {
 // ── Feed fetching ─────────────────────────────────────────────────────────────
 
 func fetchOneFeed(feedURL string, maxAge time.Duration, client *http.Client) ([]Article, error) {
-	resp, err := client.Get(feedURL)
+	req, err := http.NewRequest(http.MethodGet, feedURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; go-aicurator/1.0; +https://github.com/rfulgencio3/go-aicurator)")
+	req.Header.Set("Accept", "application/rss+xml, application/atom+xml, application/xml, text/xml, */*")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
 
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20)) // 2 MB cap
 	if err != nil {

@@ -93,7 +93,11 @@ func (c *Client) GenerateDigest(articlesCtx string) (string, error) {
 		return "", fmt.Errorf("resposta vazia da API")
 	}
 
-	return ai.StripDisclaimer(result.Choices[0].Message.Content), nil
+	stripped := ai.StripDisclaimer(result.Choices[0].Message.Content)
+	if strings.TrimSpace(stripped) == "" {
+		return "", fmt.Errorf("resposta do LLM filtrada completamente: %.300s", result.Choices[0].Message.Content)
+	}
+	return stripped, nil
 }
 
 func buildPrompt(cfg *config.Config, articlesCtx string) string {

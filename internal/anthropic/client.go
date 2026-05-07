@@ -115,7 +115,12 @@ func (c *Client) GenerateDigest(articlesCtx string) (string, error) {
 		return "", fmt.Errorf("resposta vazia da API")
 	}
 
-	return ai.StripDisclaimer(strings.Join(parts, "\n")), nil
+	content := strings.Join(parts, "\n")
+	stripped := ai.StripDisclaimer(content)
+	if strings.TrimSpace(stripped) == "" {
+		return "", fmt.Errorf("resposta do LLM filtrada completamente: %.300s", content)
+	}
+	return stripped, nil
 }
 
 func (c *Client) buildPrompt(articlesCtx string) string {
